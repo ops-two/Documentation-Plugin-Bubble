@@ -1,3 +1,6 @@
+// Ensure the global namespace exists
+window.NotionStyleEditor = window.NotionStyleEditor || {};
+
 class EventBridge {
   constructor(instance) {
     this.instance = instance;

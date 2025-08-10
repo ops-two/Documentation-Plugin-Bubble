@@ -1,3 +1,6 @@
+// Ensure the global namespace exists
+window.NotionStyleEditor = window.NotionStyleEditor || {};
+
 class DataStore {
   constructor(initialData = {}) {
     this.documentId = initialData.documentId || null;
@@ -20,5 +23,5 @@ class DataStore {
     return this.documentId;
   }
 }
-// Testing public
+
 window.NotionStyleEditor.DataStore = DataStore;
