@@ -3,6 +3,11 @@ window.NotionStyleEditor = window.NotionStyleEditor || {};
 
 class EditorRenderer {
   constructor(containerId, dataStore, eventBridge) {
+    // Log constructor arguments
+    console.log(
+      "[EditorRenderer] Constructor called with containerId:",
+      containerId
+    );
     this.containerId = containerId;
     this.dataStore = dataStore;
     this.eventBridge = eventBridge;
@@ -10,14 +15,22 @@ class EditorRenderer {
   }
 
   init(initialContent, isReadOnly) {
+    console.log("[EditorRenderer] init() called.");
     const container = document.getElementById(this.containerId);
+
     if (!container) {
-      console.error("Editor container not found!");
+      // This is a critical failure point
+      console.error(
+        "[EditorRenderer] FATAL: Editor container element was not found in the DOM! ID:",
+        this.containerId
+      );
       return;
     }
+    console.log("[EditorRenderer] Found container element:", container);
 
     container.innerHTML = "";
 
+    console.log("[EditorRenderer] Creating BlockNote editor instance...");
     this.editor = BlockNote.BlockNoteEditor.create({
       initialContent: initialContent,
       uploadFile: (file) => {
@@ -36,7 +49,9 @@ class EditorRenderer {
       theme: "light",
     });
 
+    console.log("[EditorRenderer] Rendering React component into container...");
     ReactDOM.render(editorComponent, container);
+    console.log("[EditorRenderer] React component rendered.");
 
     this.editor.onChange(() => {
       const currentContent = this.editor.document;
@@ -46,6 +61,7 @@ class EditorRenderer {
   }
 
   destroy() {
+    console.log("[EditorRenderer] destroy() called.");
     if (this.editor) {
       const container = document.getElementById(this.containerId);
       if (container) {
