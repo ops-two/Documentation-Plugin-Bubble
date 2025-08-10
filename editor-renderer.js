@@ -3,35 +3,26 @@ window.NotionStyleEditor = window.NotionStyleEditor || {};
 
 class EditorRenderer {
   constructor(containerId, dataStore, eventBridge) {
-    // Log constructor arguments
-    console.log(
-      "[EditorRenderer] Constructor called with containerId:",
-      containerId
-    );
     this.containerId = containerId;
     this.dataStore = dataStore;
     this.eventBridge = eventBridge;
     this.editor = null;
+    this.root = null; // To hold the React root
   }
 
   init(initialContent, isReadOnly) {
-    console.log("[EditorRenderer] init() called.");
     const container = document.getElementById(this.containerId);
-
     if (!container) {
-      // This is a critical failure point
       console.error(
-        "[EditorRenderer] FATAL: Editor container element was not found in the DOM! ID:",
-        this.containerId
+        "[EditorRenderer] FATAL: Editor container element was not found!"
       );
       return;
     }
-    console.log("[EditorRenderer] Found container element:", container);
 
     container.innerHTML = "";
 
-    console.log("[EditorRenderer] Creating BlockNote editor instance...");
-    this.editor = BlockNote.BlockNoteEditor.create({
+    // **NEW API:** Create the editor instance using BlockNote.core
+    this.editor = BlockNote.core.createEditor({
       initialContent: initialContent,
       uploadFile: (file) => {
         console.log("File upload triggered, but not yet implemented.", file);
@@ -43,16 +34,20 @@ class EditorRenderer {
       },
     });
 
-    const editorComponent = React.createElement(BlockNote.BlockNoteView, {
+    // **NEW API:** Create a React root for rendering
+    this.root = ReactDOM.createRoot(container);
+
+    // **NEW API:** Create the view component using BlockNote.react
+    const editorComponent = React.createElement(BlockNote.react.BlockNoteView, {
       editor: this.editor,
       editable: !isReadOnly,
       theme: "light",
     });
 
-    console.log("[EditorRenderer] Rendering React component into container...");
-    ReactDOM.render(editorComponent, container);
-    console.log("[EditorRenderer] React component rendered.");
+    // **NEW API:** Render using the new root.render method
+    this.root.render(editorComponent);
 
+    // Attach onChange listener
     this.editor.onChange(() => {
       const currentContent = this.editor.document;
       this.dataStore.setContent(currentContent);
@@ -61,14 +56,12 @@ class EditorRenderer {
   }
 
   destroy() {
-    console.log("[EditorRenderer] destroy() called.");
-    if (this.editor) {
-      const container = document.getElementById(this.containerId);
-      if (container) {
-        ReactDOM.unmountComponentAtNode(container);
-      }
-      this.editor = null;
+    if (this.root) {
+      // **NEW API:** Unmount using the root
+      this.root.unmount();
     }
+    this.editor = null;
+    this.root = null;
   }
 }
 
