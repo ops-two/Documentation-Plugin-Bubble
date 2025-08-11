@@ -1,7 +1,7 @@
-// suggestion.js - FINAL, FULLY FUNCTIONAL VERSION
+// suggestion.js - FINAL VERSION with Interaction Fix
 
 window.DocEditor.SuggestionConfig = {
-  // 1. The list of command items.
+  // The `items` array is correct and does not need to be changed.
   items: ({ query }) => {
     return [
       {
@@ -57,14 +57,17 @@ window.DocEditor.SuggestionConfig = {
     );
   },
 
-  // 2. The complete renderer with full interactivity.
   render: () => {
     let component;
     let popup;
     let selectedIndex = 0;
 
-    // This object holds all the functions to ensure `this` context is correct.
+    // This renderer object will hold all the state and methods.
     const renderer = {
+      // --- THIS IS THE FIX: Store command and items directly on the renderer object ---
+      command: null,
+      items: [],
+
       onStart: (props) => {
         component = document.createElement("div");
         component.className = "suggestion-items";
@@ -83,30 +86,33 @@ window.DocEditor.SuggestionConfig = {
       },
 
       onUpdate: (props) => {
-        // Update the items and command handler, then re-render the list.
-        renderer.renderItems(props.items, props.command);
+        // --- THIS IS THE FIX: Update the renderer's properties ---
+        renderer.items = props.items;
+        renderer.command = props.command;
+
         selectedIndex = 0;
+        renderer.renderItems();
         renderer.updateSelection();
       },
 
       onKeyDown: (props) => {
         if (props.event.key === "ArrowUp") {
           selectedIndex =
-            (selectedIndex + component.children.length - 1) %
-            component.children.length;
+            (selectedIndex + renderer.items.length - 1) % renderer.items.length;
           renderer.updateSelection();
-          return true; // Prevent editor from handling the key press
+          return true;
         }
         if (props.event.key === "ArrowDown") {
-          selectedIndex = (selectedIndex + 1) % component.children.length;
+          selectedIndex = (selectedIndex + 1) % renderer.items.length;
           renderer.updateSelection();
           return true;
         }
         if (props.event.key === "Enter") {
+          props.event.preventDefault(); // Prevent new line from being added
           renderer.selectItem(selectedIndex);
           return true;
         }
-        return false; // Let the editor handle other keys
+        return false;
       },
 
       onExit: () => {
@@ -114,9 +120,8 @@ window.DocEditor.SuggestionConfig = {
         if (component) component.remove();
       },
 
-      // --- HELPER FUNCTIONS ---
+      // --- HELPER FUNCTIONS that now use the renderer's properties ---
 
-      // Visually highlights the selected item
       updateSelection() {
         Array.from(component.children).forEach((child, index) => {
           child.classList.toggle("is-selected", index === selectedIndex);
@@ -127,30 +132,27 @@ window.DocEditor.SuggestionConfig = {
         }
       },
 
-      // Executes the command of the currently selected item
       selectItem(index) {
-        const item = this.items[index];
-        if (item) {
-          this.command(item);
+        const item = renderer.items[index];
+        if (item && renderer.command) {
+          // --- THIS IS THE FIX: Call the stored command ---
+          renderer.command(item);
         }
       },
 
-      // Renders the list of buttons into the component div
-      renderItems(items, command) {
+      renderItems() {
         component.innerHTML = "";
-        this.items = items; // Store items for keydown handlers
-        this.command = command; // Store command for selectItem
 
-        if (items.length === 0) {
+        if (renderer.items.length === 0) {
           popup.hide();
           return;
         }
 
-        popup.show(); // Make sure the popup is visible if there are items
+        popup.show();
 
-        items.forEach((item, index) => {
+        renderer.items.forEach((item, index) => {
           const button = document.createElement("button");
-          button.className = "suggestion-item"; // Style from editor-styles.css
+          button.className = "suggestion-item";
           button.textContent = item.title;
 
           button.addEventListener("click", (e) => {
