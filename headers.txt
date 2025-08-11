@@ -38,8 +38,8 @@
 
 <script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@d516fdc/api-bridge.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@d516fdc/bubble-bridge.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@e29bdbb/suggestion.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@e29bdbb/embed-extension.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@3521849/suggestion.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@3521849/embed-extension.js"></script>
 
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@e29bdbb/editor-core.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@3521849/editor-core.js"></script>
 

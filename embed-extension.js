@@ -5,6 +5,43 @@ console.log('embed-extension.js v1.0 loaded');
 window.DocEditor = window.DocEditor || {};
 window.DocEditor._embedExtensionVersion = '1.0';
 
+// Helper functions for URL parsing (defined outside the extension)
+const EmbedHelpers = {
+  detectEmbedType(url) {
+    if (!url) return 'generic';
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return 'youtube';
+    } else if (url.includes('twitter.com') || url.includes('x.com')) {
+      return 'twitter';
+    } else if (url.includes('vimeo.com')) {
+      return 'vimeo';
+    } else if (url.includes('codepen.io')) {
+      return 'codepen';
+    }
+    
+    return 'generic';
+  },
+
+  extractYouTubeId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  },
+
+  extractVimeoId(url) {
+    const regExp = /vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)(?:$|\/|\?)/;
+    const match = url.match(regExp);
+    return match ? match[3] : null;
+  },
+
+  extractCodePenId(url) {
+    const regExp = /codepen\.io\/[^\/]+\/pen\/([^\/]+)/;
+    const match = url.match(regExp);
+    return match ? match[1] : null;
+  }
+};
+
 /**
  * Universal Embed Extension for Tiptap
  * Supports: YouTube, Twitter, Vimeo, CodePen, and generic iframes
@@ -48,75 +85,41 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
     const { src, type, width, height, title } = HTMLAttributes;
     
     // Generate the appropriate embed HTML based on type
-    let embedHTML = '';
+    let iframeSrc = '';
     
     switch (type) {
       case 'youtube':
-        const youtubeId = this.extractYouTubeId(src);
-        embedHTML = `
-          <iframe
-            src="https://www.youtube.com/embed/${youtubeId}"
-            width="${width}"
-            height="${height}"
-            title="${title}"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          ></iframe>
-        `;
+        const youtubeId = EmbedHelpers.extractYouTubeId(src);
+        if (youtubeId) {
+          iframeSrc = `https://www.youtube.com/embed/${youtubeId}`;
+        }
         break;
         
       case 'twitter':
-        embedHTML = `
-          <iframe
-            src="https://twitframe.com/show?url=${encodeURIComponent(src)}"
-            width="${width}"
-            height="${height}"
-            title="${title}"
-            frameborder="0"
-          ></iframe>
-        `;
+        iframeSrc = `https://twitframe.com/show?url=${encodeURIComponent(src)}`;
         break;
         
       case 'vimeo':
-        const vimeoId = this.extractVimeoId(src);
-        embedHTML = `
-          <iframe
-            src="https://player.vimeo.com/video/${vimeoId}"
-            width="${width}"
-            height="${height}"
-            title="${title}"
-            frameborder="0"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowfullscreen
-          ></iframe>
-        `;
+        const vimeoId = EmbedHelpers.extractVimeoId(src);
+        if (vimeoId) {
+          iframeSrc = `https://player.vimeo.com/video/${vimeoId}`;
+        }
         break;
         
       case 'codepen':
-        const codepenId = this.extractCodePenId(src);
-        embedHTML = `
-          <iframe
-            src="https://codepen.io/pen/${codepenId}"
-            width="${width}"
-            height="${height}"
-            title="${title}"
-            frameborder="0"
-            allowfullscreen
-          ></iframe>
-        `;
+        const codepenId = EmbedHelpers.extractCodePenId(src);
+        if (codepenId) {
+          iframeSrc = `https://codepen.io/pen/${codepenId}`;
+        }
         break;
         
       default: // generic iframe
-        embedHTML = `
-          <iframe
-            src="${src}"
-            width="${width}"
-            height="${height}"
-            title="${title}"
-            frameborder="0"
-          ></iframe>
-        `;
+        iframeSrc = src;
+    }
+
+    // If we couldn't extract a proper URL, fallback to original
+    if (!iframeSrc) {
+      iframeSrc = src;
     }
 
     return [
@@ -127,9 +130,17 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
         class: 'embed-wrapper',
       },
       [
-        'div',
-        { class: 'embed-container' },
-        embedHTML,
+        'iframe',
+        {
+          src: iframeSrc,
+          width: width,
+          height: height,
+          title: title,
+          frameborder: '0',
+          allowfullscreen: type === 'youtube' || type === 'vimeo' || type === 'codepen' ? 'true' : null,
+          allow: type === 'youtube' ? 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' : 
+                 type === 'vimeo' ? 'autoplay; fullscreen; picture-in-picture' : null,
+        },
       ],
     ];
   },
@@ -140,7 +151,7 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
         const { url, type = null } = options;
         
         // Auto-detect embed type if not specified
-        const detectedType = type || this.detectEmbedType(url);
+        const detectedType = type || EmbedHelpers.detectEmbedType(url);
         
         return commands.insertContent({
           type: this.name,
@@ -156,40 +167,7 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
     };
   },
 
-  // Helper methods for URL parsing and type detection
-  detectEmbedType(url) {
-    if (!url) return 'generic';
-    
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      return 'youtube';
-    } else if (url.includes('twitter.com') || url.includes('x.com')) {
-      return 'twitter';
-    } else if (url.includes('vimeo.com')) {
-      return 'vimeo';
-    } else if (url.includes('codepen.io')) {
-      return 'codepen';
-    }
-    
-    return 'generic';
-  },
 
-  extractYouTubeId(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
-  },
-
-  extractVimeoId(url) {
-    const regExp = /vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)(?:$|\/|\?)/;
-    const match = url.match(regExp);
-    return match ? match[3] : null;
-  },
-
-  extractCodePenId(url) {
-    const regExp = /codepen\.io\/[^\/]+\/pen\/([^\/]+)/;
-    const match = url.match(regExp);
-    return match ? match[1] : null;
-  },
 });
 
 console.log('Embed extension created successfully');
