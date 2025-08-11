@@ -13,7 +13,7 @@ window.DocEditor.EditorCore = {
     this.currentProperties = properties;
   },
 
-  initialize(containerElement, properties) {
+  async initialize(containerElement, properties) {
     this.updateProperties(properties);
 
     if (!window.Tiptap || !window.Tiptap.Editor) {
@@ -53,6 +53,40 @@ window.DocEditor.EditorCore = {
         ];
       },
     });
+    // Wait for embed extension to be available before initializing editor
+    const waitForEmbedExtension = () => {
+      return new Promise((resolve) => {
+        // Check if embed extension is already available
+        if (window.DocEditor.EmbedExtension) {
+          console.log('✅ Embed extension already available');
+          resolve();
+          return;
+        }
+        
+        // If not available, wait for it with a timeout
+        console.log('⏳ Waiting for embed extension to be available...');
+        let attempts = 0;
+        const maxAttempts = 60; // 6 seconds max wait
+        
+        const checkInterval = setInterval(() => {
+          attempts++;
+          
+          if (window.DocEditor.EmbedExtension) {
+            clearInterval(checkInterval);
+            console.log(`✅ Embed extension found after ${attempts * 100}ms`);
+            resolve();
+          } else if (attempts >= maxAttempts) {
+            clearInterval(checkInterval);
+            console.warn('⚠️ Timeout waiting for embed extension, proceeding without it');
+            resolve();
+          }
+        }, 100);
+      });
+    };
+    
+    // Wait for embed extension, then initialize editor
+    await waitForEmbedExtension();
+    
     // Debug: Check if embed extension is available
     console.log('Checking embed extension availability:', {
       embedExtension: !!window.DocEditor.EmbedExtension,
@@ -71,9 +105,9 @@ window.DocEditor.EditorCore = {
     // Add embed extension if available
     if (window.DocEditor.EmbedExtension) {
       extensions.push(window.DocEditor.EmbedExtension);
-      console.log('Embed extension added to editor');
+      console.log('✅ Embed extension added to editor');
     } else {
-      console.warn('Embed extension not available during editor initialization');
+      console.warn('❌ Embed extension not available during editor initialization');
     }
     
     console.log('Editor extensions:', extensions.map(ext => ext.name || ext.constructor.name));
