@@ -1,4 +1,4 @@
-// editor-core.js - Upgraded for Dynamic Content
+// editor-core.js - FINAL Corrected Version for Suggestions
 
 window.DocEditor.EditorCore = {
   editor: null,
@@ -7,6 +7,7 @@ window.DocEditor.EditorCore = {
   updateProperties(properties) {
     this.currentProperties = properties;
   },
+
   initialize(containerElement, properties) {
     this.updateProperties(properties);
 
@@ -15,8 +16,29 @@ window.DocEditor.EditorCore = {
       return;
     }
 
+    // We still need all the modules from the global object
     const { Editor, StarterKit, Placeholder, Image, Suggestion } =
       window.Tiptap;
+
+    // --- THIS IS THE FIX ---
+    // We create a custom extension that USES the suggestion utility.
+    // Tiptap's `Extension.create` is the standard way to do this.
+    const SlashCommandExtension = window.Tiptap.Core.Extension.create({
+      name: "slashCommand", // Give our custom extension a name
+
+      // The key part: addProseMirrorPlugins
+      addProseMirrorPlugins() {
+        return [
+          Suggestion({
+            editor: this.editor, // Pass the Tiptap editor instance
+            char: "/", // The trigger character
+            // The `suggestion` object comes from our suggestion.js file
+            suggestion: window.DocEditor.SuggestionConfig,
+          }),
+        ];
+      },
+    });
+
     this.editor = new Editor({
       element: containerElement,
       extensions: [
@@ -24,30 +46,21 @@ window.DocEditor.EditorCore = {
         Placeholder.configure({ placeholder: "Type `/` for commands…" }),
         Image,
 
-        // --- THIS IS THE NEW PART ---
-        // Configure the suggestion utility.
-        Suggestion.configure({
-          // The char that triggers the suggestion
-          char: "/",
-          // Pass the entire configuration object from our suggestion.js file
-          suggestion: window.DocEditor.SuggestionConfig,
-        }),
+        // Now, we add our new custom extension to the list.
+        SlashCommandExtension,
       ],
-      // REMOVED: No more static content. It will be loaded from the API.
-      content: "",
-
-      // ADDED: This function runs every time the user types or makes a change.
+      // onUpdate is unchanged
       onUpdate: ({ editor }) => {
-        // Get the latest content as a JSON object.
         const contentJson = editor.getJSON();
-        // Send the stringified version to the Bubble Bridge to publish as a state.
         window.DocEditor.BubbleBridge.publishContent(
           JSON.stringify(contentJson)
         );
       },
     });
 
-    console.log("Tiptap editor instance created and waiting for content.");
+    console.log(
+      "Tiptap editor initialized with custom Slash Command extension."
+    );
   },
 
   /**
