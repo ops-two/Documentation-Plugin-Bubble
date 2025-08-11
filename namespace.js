@@ -1,0 +1,3 @@
+// namespace.js
+
+window.DocEditor = {};
