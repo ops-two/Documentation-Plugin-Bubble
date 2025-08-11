@@ -46,6 +46,13 @@ const EmbedHelpers = {
  * Universal Embed Extension for Tiptap
  * Supports: YouTube, Twitter, Vimeo, CodePen, and generic iframes
  */
+// Check if Tiptap is available
+if (!window.Tiptap || !window.Tiptap.Node) {
+  console.error('Tiptap.Node not available when creating embed extension');
+} else {
+  console.log('Creating embed extension with Tiptap.Node');
+}
+
 window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
   name: 'embed',
 
@@ -171,3 +178,15 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
 });
 
 console.log('Embed extension created successfully');
+console.log('Embed extension details:', {
+  name: window.DocEditor.EmbedExtension.name,
+  type: typeof window.DocEditor.EmbedExtension,
+  hasAddCommands: typeof window.DocEditor.EmbedExtension.config?.addCommands === 'function'
+});
+
+// Test if the extension can be accessed
+if (window.DocEditor.EmbedExtension) {
+  console.log('✅ Embed extension is accessible on window.DocEditor.EmbedExtension');
+} else {
+  console.error('❌ Embed extension is NOT accessible on window.DocEditor.EmbedExtension');
+}

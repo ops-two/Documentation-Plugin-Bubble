@@ -53,16 +53,34 @@ window.DocEditor.EditorCore = {
         ];
       },
     });
+    // Debug: Check if embed extension is available
+    console.log('Checking embed extension availability:', {
+      embedExtension: !!window.DocEditor.EmbedExtension,
+      docEditor: !!window.DocEditor,
+      embedVersion: window.DocEditor._embedExtensionVersion
+    });
+    
+    // Prepare extensions array
+    const extensions = [
+      StarterKit,
+      Placeholder.configure({ placeholder: "Type `/` for commands…" }),
+      Image,
+      SlashCommandExtension,
+    ];
+    
+    // Add embed extension if available
+    if (window.DocEditor.EmbedExtension) {
+      extensions.push(window.DocEditor.EmbedExtension);
+      console.log('Embed extension added to editor');
+    } else {
+      console.warn('Embed extension not available during editor initialization');
+    }
+    
+    console.log('Editor extensions:', extensions.map(ext => ext.name || ext.constructor.name));
+    
     this.editor = new Editor({
       element: containerElement,
-      extensions: [
-        StarterKit,
-        Placeholder.configure({ placeholder: "Type `/` for commands…" }),
-        Image,
-        SlashCommandExtension,
-        // Add the embed extension if it's available
-        ...(window.DocEditor.EmbedExtension ? [window.DocEditor.EmbedExtension] : []),
-      ],
+      extensions: extensions,
       // onUpdate is unchanged
       onUpdate: ({ editor }) => {
         const contentJson = editor.getJSON();
