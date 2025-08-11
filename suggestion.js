@@ -1,7 +1,6 @@
-// suggestion.js - FINAL, FULLY FUNCTIONAL VERSION
+// suggestion.js - RESET & SIMPLIFIED
 
 window.DocEditor.SuggestionConfig = {
-  // 1. The list of command items.
   items: ({ query }) => {
     return [
       {
@@ -32,48 +31,28 @@ window.DocEditor.SuggestionConfig = {
           editor.chain().focus().deleteRange(range).toggleBulletList().run();
         },
       },
-      {
-        title: "Numbered List",
-        command: ({ editor, range }) => {
-          editor.chain().focus().deleteRange(range).toggleOrderedList().run();
-        },
-      },
-      {
-        title: "Image",
-        command: ({ editor, range }) => {
-          const url = window.prompt("Enter image URL");
-          if (url) {
-            editor
-              .chain()
-              .focus()
-              .deleteRange(range)
-              .setImage({ src: url })
-              .run();
-          }
-        },
-      },
     ].filter((item) =>
       item.title.toLowerCase().startsWith(query.toLowerCase())
     );
   },
 
-  // 2. The complete renderer with full interactivity.
   render: () => {
-    let component;
-    let popup;
-    let selectedIndex = 0;
+    let component, popup, renderer;
 
-    // This object holds all the functions and state to ensure `this` context is correct.
-    const renderer = {
-      // These properties will be populated by onUpdate
+    const selectItem = (index) => {
+      const item = renderer.items[index];
+      if (item) {
+        renderer.command(item);
+      }
+    };
+
+    renderer = {
       items: [],
-      command: () => {},
+      command: null,
 
       onStart: (props) => {
         component = document.createElement("div");
-        // Use the class name from your correct CSS
-        component.className = "suggestion-items";
-
+        component.className = "suggestion-menu";
         popup = tippy(document.body, {
           getReferenceClientRect: props.clientRect,
           appendTo: () => document.body,
@@ -83,90 +62,45 @@ window.DocEditor.SuggestionConfig = {
           trigger: "manual",
           placement: "bottom-start",
         });
-
         renderer.onUpdate(props);
       },
 
       onUpdate: (props) => {
-        // Update the renderer's state with the latest items and command handler.
         renderer.items = props.items;
         renderer.command = props.command;
-        selectedIndex = 0;
+        component.innerHTML = "";
 
-        renderer.renderItems();
-        renderer.updateSelection();
+        if (!renderer.items.length) {
+          popup.hide();
+          return;
+        }
+
+        renderer.items.forEach((item, index) => {
+          const button = document.createElement("button");
+          button.className = "suggestion-menu-item";
+          button.textContent = item.title;
+          button.addEventListener("click", () => selectItem(index));
+          component.appendChild(button);
+        });
+        popup.show();
       },
 
-      onKeyDown: (props) => {
-        if (props.event.key === "ArrowUp") {
-          selectedIndex =
-            (selectedIndex + renderer.items.length - 1) % renderer.items.length;
-          renderer.updateSelection();
-          return true; // Prevent editor from handling the key press
-        }
-        if (props.event.key === "ArrowDown") {
-          selectedIndex = (selectedIndex + 1) % renderer.items.length;
-          renderer.updateSelection();
+      onKeyDown: ({ event }) => {
+        // We will add keyboard navigation back in the next step.
+        // For now, we only care about the 'Enter' key.
+        if (event.key === "Enter") {
+          event.preventDefault();
+          selectItem(0); // For this test, always select the first item.
           return true;
         }
-        if (props.event.key === "Enter") {
-          props.event.preventDefault();
-          renderer.selectItem(selectedIndex);
-          return true;
-        }
-        return false; // Let the editor handle other keys
+        return false;
       },
 
       onExit: () => {
         if (popup) popup.destroy();
         if (component) component.remove();
       },
-
-      // --- HELPER FUNCTIONS ---
-
-      updateSelection() {
-        Array.from(component.children).forEach((child, index) => {
-          child.classList.toggle("is-selected", index === selectedIndex);
-        });
-        const selected = component.children[selectedIndex];
-        if (selected) {
-          selected.scrollIntoView({ block: "nearest" });
-        }
-      },
-
-      selectItem(index) {
-        const item = renderer.items[index];
-        if (item) {
-          // This now correctly calls the stored command function
-          renderer.command(item);
-        }
-      },
-
-      renderItems() {
-        component.innerHTML = "";
-
-        if (renderer.items.length === 0) {
-          popup.hide();
-          return;
-        }
-
-        popup.show();
-
-        renderer.items.forEach((item, index) => {
-          const button = document.createElement("button");
-          button.className = "suggestion-item";
-          button.textContent = item.title;
-
-          button.addEventListener("click", (e) => {
-            e.preventDefault();
-            renderer.selectItem(index);
-          });
-
-          component.appendChild(button);
-        });
-      },
     };
-
     return renderer;
   },
 };
