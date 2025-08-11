@@ -1,4 +1,4 @@
-// editor-core.js - FINAL Corrected Version for Suggestions
+// editor-core.js - FINAL VERSION with Spread Syntax Fix
 
 window.DocEditor.EditorCore = {
   editor: null,
@@ -16,7 +16,7 @@ window.DocEditor.EditorCore = {
       return;
     }
 
-    // We still need all the modules from the global object
+    // All necessary modules are correctly loaded on window.Tiptap
     const {
       Editor,
       Extension,
@@ -27,10 +27,10 @@ window.DocEditor.EditorCore = {
       Suggestion,
     } = window.Tiptap;
 
-    // 2. Create a unique key for our suggestion plugin.
+    // --- THIS IS THE DEFINITIVE FIX BASED ON YOUR RESEARCH ---
+
     const suggestionPluginKey = new PluginKey("slashCommand");
 
-    // 3. Create the custom extension using the more robust pattern.
     const SlashCommandExtension = Extension.create({
       name: "slashCommand",
 
@@ -40,14 +40,10 @@ window.DocEditor.EditorCore = {
             editor: this.editor,
             key: suggestionPluginKey,
             char: "/",
-            allow: ({ state, range }) => {
-              const $from = state.doc.resolve(range.from);
-              return (
-                $from.parent.type.name === "paragraph" &&
-                $from.parent.content.size === 1
-              );
-            },
-            suggestion: window.DocEditor.SuggestionConfig,
+
+            // The spread syntax (...) unnests our config object, passing `items` and `render`
+            // directly to the Suggestion utility, which is what it expects.
+            ...window.DocEditor.SuggestionConfig,
           }),
         ];
       },
