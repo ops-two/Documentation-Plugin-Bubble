@@ -17,9 +17,15 @@ window.DocEditor.EditorCore = {
     }
 
     // We still need all the modules from the global object
-    const { Editor, Extension, StarterKit, Placeholder, Image, Suggestion } =
-      window.Tiptap;
-    const { PluginKey } = window.Tiptap.Core;
+    const {
+      Editor,
+      Extension,
+      PluginKey,
+      StarterKit,
+      Placeholder,
+      Image,
+      Suggestion,
+    } = window.Tiptap;
 
     // 2. Create a unique key for our suggestion plugin.
     const suggestionPluginKey = new PluginKey("slashCommand");
@@ -31,11 +37,9 @@ window.DocEditor.EditorCore = {
       addProseMirrorPlugins() {
         return [
           Suggestion({
-            // This configuration is more explicit and reliable.
             editor: this.editor,
-            key: suggestionPluginKey, // Use the unique key
+            key: suggestionPluginKey,
             char: "/",
-            // Allow starting a suggestion on a new line
             allow: ({ state, range }) => {
               const $from = state.doc.resolve(range.from);
               return (
@@ -43,7 +47,6 @@ window.DocEditor.EditorCore = {
                 $from.parent.content.size === 1
               );
             },
-            // Pass the full suggestion object from suggestion.js
             suggestion: window.DocEditor.SuggestionConfig,
           }),
         ];
