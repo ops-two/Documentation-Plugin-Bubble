@@ -125,6 +125,8 @@ window.DocEditor.SuggestionConfig = {
         // Update the renderer's state with the latest items and command handler.
         renderer.items = props.items;
         renderer.command = props.command;
+        renderer.range = props.range; // Store the range for text replacement
+        renderer.editor = props.editor; // Store the editor instance
         selectedIndex = 0;
 
         renderer.renderItems();
@@ -170,7 +172,7 @@ window.DocEditor.SuggestionConfig = {
 
       selectItem(index) {
         const item = renderer.items[index];
-        if (item && renderer.command) {
+        if (item && renderer.editor && renderer.range) {
           console.log(`Executing command: ${item.title}`);
           
           // Hide popup first
@@ -178,22 +180,29 @@ window.DocEditor.SuggestionConfig = {
             popup.hide();
           }
           
-          // Execute the command with proper context
+          // Execute the command with proper context - this is the key fix!
           try {
-            renderer.command(item);
+            // First, delete the trigger character ("/") using the range
+            // Then apply the formatting command
+            renderer.editor
+              .chain()
+              .focus()
+              .deleteRange(renderer.range)
+              .run();
+            
+            // Now execute the actual formatting command
+            item.command({ editor: renderer.editor });
+            
             console.log(`Command executed successfully: ${item.title}`);
           } catch (error) {
             console.error(`Error executing command ${item.title}:`, error);
           }
-          
-          // Return focus to editor
-          if (renderer.editor) {
-            setTimeout(() => {
-              renderer.editor.commands.focus();
-            }, 10);
-          }
         } else {
-          console.error('No item or command function available', { item, command: renderer.command });
+          console.error('Missing required data for command execution', { 
+            item, 
+            editor: renderer.editor, 
+            range: renderer.range 
+          });
         }
       },
 
