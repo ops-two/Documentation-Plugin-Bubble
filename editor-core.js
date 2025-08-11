@@ -60,6 +60,8 @@ window.DocEditor.EditorCore = {
         Placeholder.configure({ placeholder: "Type `/` for commands…" }),
         Image,
         SlashCommandExtension,
+        // Add the embed extension if it's available
+        ...(window.DocEditor.EmbedExtension ? [window.DocEditor.EmbedExtension] : []),
       ],
       // onUpdate is unchanged
       onUpdate: ({ editor }) => {

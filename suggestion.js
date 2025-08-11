@@ -63,6 +63,33 @@ window.DocEditor.SuggestionConfig = {
         title: "Code Block",
         command: ({ editor }) => editor.chain().focus().toggleCodeBlock().run(),
       },
+      {
+        title: "YouTube Embed",
+        command: ({ editor }) => {
+          const url = prompt('Enter YouTube URL:');
+          if (url) {
+            editor.chain().focus().setEmbed({ url, type: 'youtube' }).run();
+          }
+        },
+      },
+      {
+        title: "Twitter Embed",
+        command: ({ editor }) => {
+          const url = prompt('Enter Twitter/X URL:');
+          if (url) {
+            editor.chain().focus().setEmbed({ url, type: 'twitter' }).run();
+          }
+        },
+      },
+      {
+        title: "Generic Embed",
+        command: ({ editor }) => {
+          const url = prompt('Enter URL to embed:');
+          if (url) {
+            editor.chain().focus().setEmbed({ url, type: 'generic' }).run();
+          }
+        },
+      },
     ];
 
     return commands.filter((item) =>

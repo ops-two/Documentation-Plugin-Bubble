@@ -162,3 +162,66 @@
   background-color: var(--link);
   color: var(--bg); /* White text on blue background */
 }
+
+/* ===== Embed Component Styling ===== */
+
+.embed-wrapper {
+  margin: var(--block-gap) 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  position: relative;
+}
+
+.embed-wrapper:hover {
+  border-color: var(--link);
+  box-shadow: 0 0 0 1px var(--link);
+}
+
+.embed-container {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  overflow: hidden;
+}
+
+.embed-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: var(--radius);
+}
+
+/* Twitter embeds need different aspect ratio */
+.embed-wrapper[data-type="twitter"] .embed-container {
+  padding-bottom: 0;
+  height: 500px;
+}
+
+/* Loading state for embeds */
+.embed-wrapper::before {
+  content: "Loading embed...";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--muted);
+  font-size: 0.9rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.embed-wrapper iframe {
+  z-index: 2;
+}
+
+/* Selected embed styling */
+.ProseMirror .embed-wrapper.ProseMirror-selectednode {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
