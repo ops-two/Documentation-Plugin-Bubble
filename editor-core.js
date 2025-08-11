@@ -2,8 +2,14 @@
 
 window.DocEditor.EditorCore = {
   editor: null,
+  currentProperties: {},
 
+  updateProperties(properties) {
+    this.currentProperties = properties;
+  },
   initialize(containerElement, properties) {
+    this.updateProperties(properties);
+
     if (!window.Tiptap || !window.Tiptap.Editor) {
       console.error("Tiptap not loaded.");
       return;
@@ -47,36 +53,41 @@ window.DocEditor.EditorCore = {
       console.log("EditorCore: Content has been set.");
     }
   },
-  /**
-   * Triggers the save process.
-   * @param {object} properties - The plugin's properties from Bubble.
-   */
-  async save(properties) {
+  async save() {
+    // REMOVED: No longer needs properties as an argument.
     if (!this.editor) {
       console.error("Save failed: Editor not initialized.");
+      return;
+    }
+
+    // --- THIS IS THE FIX ---
+    // It now reads the properties from its own stored copy.
+    if (
+      !this.currentProperties ||
+      !this.currentProperties.save_api_endpoint_text
+    ) {
+      console.error(
+        "Save failed: Save API endpoint is not defined in properties."
+      );
       return;
     }
 
     console.log("EditorCore: Initiating save...");
 
     try {
-      // Get the latest content from the editor.
       const contentJson = this.editor.getJSON();
 
-      // Call the ApiBridge to send the data to the backend.
+      // Use the stored properties.
       const result = await window.DocEditor.ApiBridge.saveDocument(
-        properties.save_api_endpoint_text,
-        properties.document_id_text,
+        this.currentProperties.save_api_endpoint_text,
+        this.currentProperties.document_id_text,
         contentJson,
-        properties.api_auth_token_text
+        this.currentProperties.api_auth_token_text
       );
 
       console.log("Save successful!", result);
-      // Optional: Add a visual confirmation, like a toast notification.
-      // We could also trigger a 'document_saved' event back to Bubble here.
     } catch (error) {
       console.error("Save failed:", error);
-      // Optional: Show an error message to the user.
     }
   },
 };
