@@ -10,8 +10,10 @@ window.DocEditor = {
      */
     initialize(containerElement) {
       // Failsafe: Check if the global Tiptap object exists.
-      if (!window.Tiptap ||!window.Tiptap.Editor) {
-        console.error("Tiptap or its Editor class is not available. Cannot initialize.");
+      if (!window.Tiptap || !window.Tiptap.Editor) {
+        console.error(
+          "Tiptap or its Editor class is not available. Cannot initialize."
+        );
         containerElement.innerHTML = "Error: Tiptap libraries failed to load.";
         return;
       }
@@ -22,7 +24,14 @@ window.DocEditor = {
       // Create the Tiptap editor instance.
       this.editor = new Editor({
         element: containerElement,
-        extensions:,
+        extensions: [
+          StarterKit,
+          Placeholder.configure({
+            placeholder: "Start writing your beautiful document…",
+          }),
+          Link,
+          Image,
+        ],
         // Static content for testing purposes.
         content: `
           <h2>Success! ✅</h2>
@@ -37,10 +46,7 @@ window.DocEditor = {
         },
       });
 
-      console.log(
-        "Tiptap editor instance created successfully.",
-        this.editor
-      );
+      console.log("Tiptap editor instance created successfully.", this.editor);
     },
   },
 };
