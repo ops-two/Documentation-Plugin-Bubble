@@ -3,9 +3,64 @@
 window.DocEditor.SuggestionConfig = {
   // 1. The list of command items.
   items: ({ query }) => {
-    // THE FIX IS HERE: The array of objects was missing before the `.filter()` call.
-    // This is the correct structure.
-    return.filter(item => 
+    const commands = [
+      {
+        title: "Bold",
+        command: ({ editor }) => editor.chain().focus().toggleBold().run(),
+      },
+      {
+        title: "Italic",
+        command: ({ editor }) => editor.chain().focus().toggleItalic().run(),
+      },
+      {
+        title: "Underline",
+        command: ({ editor }) => editor.chain().focus().toggleUnderline().run(),
+      },
+      {
+        title: "Strike",
+        command: ({ editor }) => editor.chain().focus().toggleStrike().run(),
+      },
+      {
+        title: "Code",
+        command: ({ editor }) => editor.chain().focus().toggleCode().run(),
+      },
+      {
+        title: "Heading 1",
+        command: ({ editor }) =>
+          editor.chain().focus().toggleHeading({ level: 1 }).run(),
+      },
+      {
+        title: "Heading 2",
+        command: ({ editor }) =>
+          editor.chain().focus().toggleHeading({ level: 2 }).run(),
+      },
+      {
+        title: "Heading 3",
+        command: ({ editor }) =>
+          editor.chain().focus().toggleHeading({ level: 3 }).run(),
+      },
+      {
+        title: "Bullet List",
+        command: ({ editor }) =>
+          editor.chain().focus().toggleBulletList().run(),
+      },
+      {
+        title: "Ordered List",
+        command: ({ editor }) =>
+          editor.chain().focus().toggleOrderedList().run(),
+      },
+      {
+        title: "Blockquote",
+        command: ({ editor }) =>
+          editor.chain().focus().toggleBlockquote().run(),
+      },
+      {
+        title: "Code Block",
+        command: ({ editor }) => editor.chain().focus().toggleCodeBlock().run(),
+      },
+    ];
+
+    return commands.filter((item) =>
       item.title.toLowerCase().startsWith(query.toLowerCase())
     );
   },
@@ -19,24 +74,24 @@ window.DocEditor.SuggestionConfig = {
     // This object holds all the functions and state to ensure `this` context is correct.
     const renderer = {
       // These properties will be populated by onUpdate to hold the current state.
-      items:,
+      items: [],
       command: () => {},
 
       onStart: (props) => {
-        component = document.createElement('div');
+        component = document.createElement("div");
         // Use the class name from your correct CSS
-        component.className = 'suggestion-items'; 
-        
+        component.className = "suggestion-items";
+
         popup = tippy(document.body, {
           getReferenceClientRect: props.clientRect,
           appendTo: () => document.body,
           content: component,
           showOnCreate: true,
           interactive: true,
-          trigger: 'manual',
-          placement: 'bottom-start',
+          trigger: "manual",
+          placement: "bottom-start",
         });
-        
+
         renderer.onUpdate(props);
       },
 
@@ -51,17 +106,18 @@ window.DocEditor.SuggestionConfig = {
       },
 
       onKeyDown: (props) => {
-        if (props.event.key === 'ArrowUp') {
-          selectedIndex = (selectedIndex + renderer.items.length - 1) % renderer.items.length;
+        if (props.event.key === "ArrowUp") {
+          selectedIndex =
+            (selectedIndex + renderer.items.length - 1) % renderer.items.length;
           renderer.updateSelection();
           return true; // Prevent editor from handling the key press
         }
-        if (props.event.key === 'ArrowDown') {
+        if (props.event.key === "ArrowDown") {
           selectedIndex = (selectedIndex + 1) % renderer.items.length;
           renderer.updateSelection();
           return true;
         }
-        if (props.event.key === 'Enter') {
+        if (props.event.key === "Enter") {
           props.event.preventDefault();
           renderer.selectItem(selectedIndex);
           return true;
@@ -78,11 +134,11 @@ window.DocEditor.SuggestionConfig = {
 
       updateSelection() {
         Array.from(component.children).forEach((child, index) => {
-          child.classList.toggle('is-selected', index === selectedIndex);
+          child.classList.toggle("is-selected", index === selectedIndex);
         });
         const selected = component.children[selectedIndex];
         if (selected) {
-          selected.scrollIntoView({ block: 'nearest' });
+          selected.scrollIntoView({ block: "nearest" });
         }
       },
 
@@ -95,7 +151,7 @@ window.DocEditor.SuggestionConfig = {
       },
 
       renderItems() {
-        component.innerHTML = '';
+        component.innerHTML = "";
 
         if (renderer.items.length === 0) {
           popup.hide();
@@ -105,11 +161,11 @@ window.DocEditor.SuggestionConfig = {
         popup.show();
 
         renderer.items.forEach((item, index) => {
-          const button = document.createElement('button');
-          button.className = 'suggestion-item';
+          const button = document.createElement("button");
+          button.className = "suggestion-item";
           button.textContent = item.title;
 
-          button.addEventListener('click', (e) => {
+          button.addEventListener("click", (e) => {
             e.preventDefault();
             renderer.selectItem(index);
           });
