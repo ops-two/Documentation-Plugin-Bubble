@@ -33,11 +33,7 @@ window.DocEditor.EditorCore = {
         Placeholder.configure({ placeholder: "Type / for commands…" }),
         Image,
         // ADDED: The Suggestion extension
-        Suggestion.configure({
-          char: "/", // The trigger character
-          // The `suggestion` object here is our configuration from suggestion.js
-          suggestion: window.DocEditor.SuggestionConfig,
-        }),
+
         CodeBlockLowlight.configure({
           lowlight,
         }),
@@ -46,6 +42,11 @@ window.DocEditor.EditorCore = {
         YouTube.configure({
           controls: true, // Show video controls
           modestBranding: true, // Use a less prominent YouTube logo
+        }),
+        Suggestion.configure({
+          char: "/", // The trigger character
+          // The `suggestion` object here is our configuration from suggestion.js
+          suggestion: window.DocEditor.SuggestionConfig,
         }),
       ],
       // REMOVED: No more static content. It will be loaded from the API.
