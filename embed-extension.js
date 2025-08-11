@@ -119,8 +119,8 @@ function createEmbedExtension() {
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
-    const { src, type } = HTMLAttributes;
+  renderHTML({ node, HTMLAttributes }) {
+    const { src, type } = node.attrs;
     
     if (!src) {
       return ['div', { class: 'embed-wrapper' }, 'No embed URL provided'];
