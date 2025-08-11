@@ -35,15 +35,14 @@ function(instance, properties, context) {
         instance.data.loaded_doc_id = properties.document_id_text;
         console.log(`New document ID detected: ${properties.document_id_text}`);
 
-        // Call our ApiBridge to fetch the data.
+        // Call our ApiBridge to fetch the data using new PostgreSQL API
         window.DocEditor.ApiBridge.fetchDocument(
-            properties.load_api_endpoint_text,
             properties.document_id_text,
             properties.api_auth_token_text
         )
         .then(data => {
             // On success, pass the content to the EditorCore.
-            window.DocEditor.EditorCore.setContent(data.content_json);
+            window.DocEditor.EditorCore.setContent(data.content);
         })
         .catch(error => {
             console.error("Failed to load document:", error);

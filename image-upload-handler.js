@@ -204,7 +204,8 @@ async function createImageUploadExtension() {
       const extension = this;
       
       return [
-        new window.Tiptap.PluginKey('imageUploadDrop').plugin({
+        new window.Tiptap.Plugin({
+          key: new window.Tiptap.PluginKey('imageUploadDrop'),
           props: {
             handleDrop(view, event, slice, moved) {
               // Only handle external file drops (not internal moves)

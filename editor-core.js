@@ -62,10 +62,9 @@ window.DocEditor.EditorCore = {
     
     // Prepare extensions array
     const extensions = [
-      StarterKit,
+      StarterKit, // StarterKit already includes Underline, so no need to add it separately
       Placeholder.configure({ placeholder: "Type `/` for commands or drag & drop images to upload…" }),
       Image,
-      Underline, // Required for bubble menu underline functionality
       SlashCommandExtension,
     ];
     

@@ -9,7 +9,7 @@
 
 <script type="module">
   import { Editor, Extension, Node } from 'https://esm.sh/@tiptap/core';
-   import { PluginKey } from 'https://esm.sh/prosemirror-state';
+   import { PluginKey, Plugin } from 'https://esm.sh/prosemirror-state';
 
  import StarterKit from 'https://esm.sh/@tiptap/starter-kit';
   import Placeholder from 'https://esm.sh/@tiptap/extension-placeholder';
@@ -26,6 +26,7 @@
     Extension,
     Node,
     PluginKey,
+    Plugin,
     StarterKit,
     Placeholder,
     Link,
