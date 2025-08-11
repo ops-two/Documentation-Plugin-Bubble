@@ -1,11 +1,11 @@
 // embed-extension.js - Universal Embed Extension for Tiptap
-console.log('embed-extension.js v1.0 loaded');
+console.log('embed-extension.js v1.1 loaded');
 
 // Version beacon for debugging
 window.DocEditor = window.DocEditor || {};
-window.DocEditor._embedExtensionVersion = '1.0';
+window.DocEditor._embedExtensionVersion = '1.1';
 
-// Helper functions for URL parsing (defined outside the extension)
+// Helper functions for URL parsing
 const EmbedHelpers = {
   detectEmbedType(url) {
     if (!url) return 'generic';
@@ -39,20 +39,38 @@ const EmbedHelpers = {
     const regExp = /codepen\.io\/[^\/]+\/pen\/([^\/]+)/;
     const match = url.match(regExp);
     return match ? match[1] : null;
+  },
+
+  getEmbedSrc(url, type) {
+    switch (type) {
+      case 'youtube':
+        const youtubeId = this.extractYouTubeId(url);
+        return youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : url;
+      case 'twitter':
+        return `https://twitframe.com/show?url=${encodeURIComponent(url)}`;
+      case 'vimeo':
+        const vimeoId = this.extractVimeoId(url);
+        return vimeoId ? `https://player.vimeo.com/video/${vimeoId}` : url;
+      case 'codepen':
+        const codepenId = this.extractCodePenId(url);
+        return codepenId ? `https://codepen.io/pen/${codepenId}` : url;
+      default:
+        return url;
+    }
   }
 };
 
-/**
- * Universal Embed Extension for Tiptap
- * Supports: YouTube, Twitter, Vimeo, CodePen, and generic iframes
- */
 // Check if Tiptap is available
 if (!window.Tiptap || !window.Tiptap.Node) {
-  console.error('Tiptap.Node not available when creating embed extension');
+  console.error('❌ Tiptap.Node not available when creating embed extension');
 } else {
-  console.log('Creating embed extension with Tiptap.Node');
+  console.log('✅ Creating embed extension with Tiptap.Node');
 }
 
+/**
+ * Universal Embed Extension for Tiptap
+ * Following official Tiptap Node API structure
+ */
 window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
   name: 'embed',
 
@@ -64,18 +82,27 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
     return {
       src: {
         default: null,
+        parseHTML: element => element.getAttribute('data-src'),
+        renderHTML: attributes => {
+          if (!attributes.src) {
+            return {};
+          }
+          return {
+            'data-src': attributes.src,
+          };
+        },
       },
       type: {
-        default: 'generic', // youtube, twitter, vimeo, codepen, generic
-      },
-      width: {
-        default: '100%',
-      },
-      height: {
-        default: 400,
-      },
-      title: {
-        default: 'Embedded content',
+        default: 'generic',
+        parseHTML: element => element.getAttribute('data-type'),
+        renderHTML: attributes => {
+          if (!attributes.type) {
+            return {};
+          }
+          return {
+            'data-type': attributes.type,
+          };
+        },
       },
     };
   },
@@ -84,55 +111,30 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
     return [
       {
         tag: 'div[data-embed]',
+        getAttrs: element => ({
+          src: element.getAttribute('data-src'),
+          type: element.getAttribute('data-type'),
+        }),
       },
     ];
   },
 
   renderHTML({ HTMLAttributes }) {
-    const { src, type, width, height, title } = HTMLAttributes;
+    const { src, type } = HTMLAttributes;
     
-    // Generate the appropriate embed HTML based on type
-    let iframeSrc = '';
-    
-    switch (type) {
-      case 'youtube':
-        const youtubeId = EmbedHelpers.extractYouTubeId(src);
-        if (youtubeId) {
-          iframeSrc = `https://www.youtube.com/embed/${youtubeId}`;
-        }
-        break;
-        
-      case 'twitter':
-        iframeSrc = `https://twitframe.com/show?url=${encodeURIComponent(src)}`;
-        break;
-        
-      case 'vimeo':
-        const vimeoId = EmbedHelpers.extractVimeoId(src);
-        if (vimeoId) {
-          iframeSrc = `https://player.vimeo.com/video/${vimeoId}`;
-        }
-        break;
-        
-      case 'codepen':
-        const codepenId = EmbedHelpers.extractCodePenId(src);
-        if (codepenId) {
-          iframeSrc = `https://codepen.io/pen/${codepenId}`;
-        }
-        break;
-        
-      default: // generic iframe
-        iframeSrc = src;
+    if (!src) {
+      return ['div', { class: 'embed-wrapper' }, 'No embed URL provided'];
     }
 
-    // If we couldn't extract a proper URL, fallback to original
-    if (!iframeSrc) {
-      iframeSrc = src;
-    }
+    // Get the proper iframe source
+    const iframeSrc = EmbedHelpers.getEmbedSrc(src, type);
+    const height = type === 'twitter' ? '500' : '400';
 
     return [
       'div',
       {
         'data-embed': '',
+        'data-src': src,
         'data-type': type,
         class: 'embed-wrapper',
       },
@@ -140,9 +142,9 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
         'iframe',
         {
           src: iframeSrc,
-          width: width,
+          width: '100%',
           height: height,
-          title: title,
+          title: `${type} embed`,
           frameborder: '0',
           allowfullscreen: type === 'youtube' || type === 'vimeo' || type === 'codepen' ? 'true' : null,
           allow: type === 'youtube' ? 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' : 
@@ -157,17 +159,21 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
       setEmbed: (options) => ({ commands }) => {
         const { url, type = null } = options;
         
+        if (!url) {
+          console.warn('setEmbed: No URL provided');
+          return false;
+        }
+        
         // Auto-detect embed type if not specified
         const detectedType = type || EmbedHelpers.detectEmbedType(url);
+        
+        console.log('setEmbed command executing:', { url, detectedType });
         
         return commands.insertContent({
           type: this.name,
           attrs: {
             src: url,
             type: detectedType,
-            width: '100%',
-            height: detectedType === 'twitter' ? 500 : 400,
-            title: `${detectedType} embed`,
           },
         });
       },
@@ -177,16 +183,14 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
 
 });
 
-console.log('Embed extension created successfully');
-console.log('Embed extension details:', {
-  name: window.DocEditor.EmbedExtension.name,
-  type: typeof window.DocEditor.EmbedExtension,
-  hasAddCommands: typeof window.DocEditor.EmbedExtension.config?.addCommands === 'function'
-});
-
-// Test if the extension can be accessed
+// Verify the extension was created successfully
 if (window.DocEditor.EmbedExtension) {
-  console.log('✅ Embed extension is accessible on window.DocEditor.EmbedExtension');
+  console.log('✅ Embed extension created successfully');
+  console.log('Extension details:', {
+    name: window.DocEditor.EmbedExtension.name,
+    type: typeof window.DocEditor.EmbedExtension,
+    config: !!window.DocEditor.EmbedExtension.config
+  });
 } else {
-  console.error('❌ Embed extension is NOT accessible on window.DocEditor.EmbedExtension');
+  console.error('❌ Failed to create embed extension');
 }
