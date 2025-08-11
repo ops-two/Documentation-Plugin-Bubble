@@ -1,4 +1,4 @@
-// editor-core.js - CORRECTED AND STABILIZED
+// editor-core.js - Upgraded for Dynamic Content
 
 window.DocEditor.EditorCore = {
   editor: null,
@@ -7,59 +7,47 @@ window.DocEditor.EditorCore = {
   updateProperties(properties) {
     this.currentProperties = properties;
   },
-
   initialize(containerElement, properties) {
     this.updateProperties(properties);
 
-    if (!window.Tiptap || !window.Tiptap.Editor || !window.Tiptap.lowlight) {
-      console.error("Tiptap or Lowlight library not available.");
-      containerElement.innerHTML =
-        "Error: Core editor libraries failed to load.";
+    if (!window.Tiptap || !window.Tiptap.Editor) {
+      console.error("Tiptap not loaded.");
       return;
     }
 
-    const {
-      Editor,
-      StarterKit,
-      Placeholder,
-      Image,
-      CodeBlockLowlight,
-      lowlight,
-    } = window.Tiptap;
-    const { YouTube } = window.DocEditor;
+    const { Editor, StarterKit, Placeholder, Image, Suggestion } =
+      window.Tiptap;
+    this.editor = new Editor({
+      element: containerElement,
+      extensions: [
+        StarterKit,
+        Placeholder.configure({ placeholder: "Type `/` for commands…" }),
+        Image,
 
-    try {
-      this.editor = new Editor({
-        element: containerElement,
-        extensions: [
-          StarterKit.configure({ codeBlock: false }),
-          Placeholder.configure({ placeholder: "Start writing..." }),
-          Image,
-          CodeBlockLowlight.configure({ lowlight }),
-          YouTube.configure({ controls: true, modestBranding: true }),
-        ],
+        // --- THIS IS THE NEW PART ---
+        // Configure the suggestion utility.
+        Suggestion.configure({
+          // The char that triggers the suggestion
+          char: "/",
+          // Pass the entire configuration object from our suggestion.js file
+          suggestion: window.DocEditor.SuggestionConfig,
+        }),
+      ],
+      // REMOVED: No more static content. It will be loaded from the API.
+      content: "",
 
-        content: "", // Start empty, content will be loaded by update.js
+      // ADDED: This function runs every time the user types or makes a change.
+      onUpdate: ({ editor }) => {
+        // Get the latest content as a JSON object.
+        const contentJson = editor.getJSON();
+        // Send the stringified version to the Bubble Bridge to publish as a state.
+        window.DocEditor.BubbleBridge.publishContent(
+          JSON.stringify(contentJson)
+        );
+      },
+    });
 
-        onUpdate: ({ editor }) => {
-          const contentJson = editor.getJSON();
-          window.DocEditor.BubbleBridge.publishContent(
-            JSON.stringify(contentJson)
-          );
-        },
-      });
-
-      console.log(
-        "Tiptap editor instance initialized successfully with Code Block."
-      );
-    } catch (e) {
-      // This will catch any errors during initialization and display them.
-      console.error(
-        "A critical error occurred during Tiptap initialization:",
-        e
-      );
-      containerElement.innerHTML = `Error initializing editor: ${e.message}`;
-    }
+    console.log("Tiptap editor instance created and waiting for content.");
   },
 
   /**

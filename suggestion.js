@@ -1,105 +1,37 @@
 // suggestion.js
 
-// This object defines the list of commands for our slash menu.
-const commandItems = [
-  {
-    title: "Heading 1",
-    command: ({ editor, range }) =>
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .setNode("heading", { level: 1 })
-        .run(),
-  },
-  {
-    title: "Heading 2",
-    command: ({ editor, range }) =>
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .setNode("heading", { level: 2 })
-        .run(),
-  },
-  {
-    title: "Bulleted List",
-    command: ({ editor, range }) =>
-      editor.chain().focus().deleteRange(range).toggleBulletList().run(),
-  },
-  {
-    title: "Numbered List",
-    command: ({ editor, range }) =>
-      editor.chain().focus().deleteRange(range).toggleOrderedList().run(),
-  },
-  {
-    title: "Blockquote",
-    command: ({ editor, range }) =>
-      editor.chain().focus().deleteRange(range).toggleBlockquote().run(),
-  },
-  {
-    title: "Code Block",
-    command: ({ editor, range }) =>
-      editor.chain().focus().deleteRange(range).toggleCodeBlock().run(),
-  },
-  {
-    title: "YouTube Video",
-    command: ({ editor, range }) => {
-      const url = window.prompt("Enter YouTube URL");
-      if (url) {
-        editor
-          .chain()
-          .focus()
-          .deleteRange(range)
-          .setYoutubeVideo({ src: url })
-          .run();
-      }
-    },
-  },
-  {
-    title: "Image",
-    command: ({ editor, range }) => {
-      const url = window.prompt("Enter image URL");
-      if (url) {
-        editor.chain().focus().deleteRange(range).setImage({ src: url }).run();
-      }
-    },
-  },
-];
-
-// This is the core configuration object for Tiptap's Suggestion utility.
 window.DocEditor.SuggestionConfig = {
-  // Define the items by mapping over our command list.
+  // 1. The list of items to suggest.
+  // We'll add icons and descriptions later. For now, just titles.
   items: ({ query }) => {
-    return commandItems
-      .filter((item) =>
-        item.title.toLowerCase().startsWith(query.toLowerCase())
-      )
-      .slice(0, 10);
+    const allCommands = [
+      { title: "Heading 1" },
+      { title: "Heading 2" },
+      { title: "Bulleted List" },
+      { title: "Numbered List" },
+      { title: "Image" },
+    ];
+
+    // Simple filter logic
+    return allCommands.filter((item) =>
+      item.title.toLowerCase().startsWith(query.toLowerCase())
+    );
   },
 
-  // This function renders the suggestion list popup.
+  // 2. The renderer. This is pure vanilla JavaScript for creating the popup.
   render: () => {
     let component;
     let popup;
 
     return {
-      // onStart is called when the suggestion should be shown.
+      // Called when the suggestion begins
       onStart: (props) => {
-        // Create the container for the suggestion items.
+        // Create the main container for the list items
         component = document.createElement("div");
         component.className = "suggestion-items"; // Style from our CSS
 
-        // Render each item into the container.
-        props.items.forEach((item, index) => {
-          const button = document.createElement("button");
-          button.className = "suggestion-item";
-          button.textContent = item.title;
-          button.addEventListener("click", () => props.command(item));
-          component.appendChild(button);
-        });
-
-        // Create the floating popup using tippy.js (which Tiptap uses internally).
+        // Create the tippy.js popup instance to hold our list
+        // Note: Tiptap includes a lightweight popup library internally.
         popup = tippy(document.body, {
           getReferenceClientRect: props.clientRect,
           appendTo: () => document.body,
@@ -109,44 +41,58 @@ window.DocEditor.SuggestionConfig = {
           trigger: "manual",
           placement: "bottom-start",
         });
+
+        // Initial render of the items
+        this.update(props);
       },
 
-      // onUpdate is called when the user types, filtering the list.
+      // Called on every keystroke while the suggestion is active
       onUpdate(props) {
-        // This function is complex to write from scratch, so for now,
-        // we'll simply re-render on every update. A more advanced
-        // implementation would diff the items.
-        if (component) {
-          this.onExit();
-          this.onStart(props);
-        }
+        // Pass the new items and command handler to the renderer
+        this.command = props.command;
+        this.renderItems(props.items);
       },
 
-      // onKeyDown handles keyboard navigation (Arrow keys and Enter).
+      // Called when a key is pressed
       onKeyDown(props) {
-        if (props.event.key === "ArrowUp") {
-          // Logic for moving selection up
-          return true; // Prevent Tiptap from handling the event
-        }
-        if (props.event.key === "ArrowDown") {
-          // Logic for moving selection down
+        if (props.event.key === "Escape") {
+          popup.hide();
           return true;
         }
-        if (props.event.key === "Enter") {
-          // Logic for selecting the highlighted item
-          return true;
-        }
+        // We will add arrow key navigation later. For now, this is enough.
         return false;
       },
 
-      // onExit is called when the suggestion should be hidden.
+      // Called when the suggestion ends
       onExit() {
-        if (popup) {
-          popup.destroy();
+        if (popup) popup.destroy();
+        if (component) component.remove();
+      },
+
+      // Helper function to render the actual list items
+      renderItems(items) {
+        if (!component) return;
+
+        // Clear previous items
+        component.innerHTML = "";
+
+        if (items.length === 0) {
+          component.innerHTML = "No results";
+          return;
         }
-        if (component) {
-          component.remove();
-        }
+
+        items.forEach((item, index) => {
+          const button = document.createElement("button");
+          button.className = "suggestion-item"; // Style from our CSS
+          button.textContent = item.title;
+
+          // We will wire this up in the next step. For now, it does nothing.
+          button.addEventListener("click", () => {
+            console.log(`Clicked on: ${item.title}`);
+          });
+
+          component.appendChild(button);
+        });
       },
     };
   },
