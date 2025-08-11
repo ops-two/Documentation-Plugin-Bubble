@@ -1,4 +1,4 @@
-/* editor-styles.css - Tiptap Version, inspired by BlockNotes style */
+/* editor-styles.css - FINAL, CLEANED-UP VERSION */
 
 /* ============================================================================
    Tiptap Editor — Professional Styling
@@ -9,7 +9,7 @@
   --font-sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
     Arial, "Apple Color Emoji", "Segoe UI Emoji";
   --leading: 1.65;
-  --measure: 70ch; /* Max width for readability */
+  --measure: 70ch;
   --block-gap: 1.1rem;
   --gap-tight: 0.7rem;
   --radius: 8px;
@@ -34,25 +34,22 @@
 }
 
 /* ---------- Tiptap Editor Base ---------- */
-/* The .ProseMirror class is Tiptap's main editor container */
 .ProseMirror {
   font-family: var(--font-sans);
   color: var(--fg);
   line-height: var(--leading);
-  padding: 1rem 2rem; /* Give it some breathing room */
-  outline: none; /* Tiptap handles its own focus state */
+  padding: 1rem 2rem;
+  outline: none;
   height: 100%;
-  overflow-y: auto; /* Allow scrolling within the editor */
+  overflow-y: auto;
 }
 
-/* Set max-width for all content blocks inside the editor */
 .ProseMirror > * {
   max-width: var(--measure);
   margin-left: auto;
   margin-right: auto;
 }
 
-/* Vertical Spacing (Rhythm) */
 .ProseMirror > * + * {
   margin-top: var(--block-gap);
 }
@@ -61,7 +58,7 @@
   margin-top: var(--gap-tight);
 }
 
-/* Headings */
+/* --- Block Elements --- */
 .ProseMirror h1,
 .ProseMirror h2,
 .ProseMirror h3 {
@@ -79,7 +76,6 @@
   font-size: 1.375rem;
 }
 
-/* Blockquotes */
 .ProseMirror blockquote {
   margin-left: 0;
   padding-left: 1rem;
@@ -87,17 +83,15 @@
   color: var(--muted);
 }
 
-/* Lists */
 .ProseMirror ul,
 .ProseMirror ol {
   padding-left: 1.5rem;
 }
 .ProseMirror li p {
-  margin-top: 0.2rem; /* Tiptap wraps list items in paragraphs, so we adjust their margin */
+  margin-top: 0.2rem;
   margin-bottom: 0.2rem;
 }
 
-/* Images */
 .ProseMirror img {
   display: block;
   max-width: 100%;
@@ -110,54 +104,13 @@
   outline: 3px solid var(--link);
 }
 
-/* Placeholder Text */
-.ProseMirror p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  color: var(--muted);
-  pointer-events: none;
-  height: 0;
-}
-
-/* ===== Slash Command Menu Styling (NEW) ===== */
-.suggestion-items {
-  padding: 0.3rem;
-  position: relative;
-  border-radius: 0.5rem;
-  background: var(--bg);
-  color: var(--fg);
-  overflow: hidden;
-  font-size: 0.9rem;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-}
-
-.suggestion-item {
-  display: block;
-  margin: 0;
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border-radius: 0.4rem;
-  padding: 0.4rem 0.6rem;
-  font-family: var(--font-sans);
-}
-
-.suggestion-item.is-selected {
-  background-color: var(--link);
-  color: var(--bg);
-}
-
-/* editor-styles.css - ADD THESE STYLES */
-
-/* --- Code Blocks --- */
 .ProseMirror pre {
-  background: #0d0d0d; /* A dark background for code */
+  background: #0d0d0d;
   color: #fff;
-  font-family: "JetBrains Mono", monospace; /* A popular coding font */
+  font-family: "JetBrains Mono", monospace;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  white-space: pre-wrap; /* Wrap long lines of code */
+  white-space: pre-wrap;
 }
 
 .ProseMirror pre code {
@@ -167,44 +120,45 @@
   font-size: 0.8rem;
 }
 
-/* --- YouTube Embeds --- */
-.youtube-wrapper {
-  position: relative;
-  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+/* Placeholder Text */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted);
+  pointer-events: none;
   height: 0;
-  overflow: hidden;
-  max-width: 100%;
 }
 
-.youtube-wrapper iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  border-radius: var(--radius);
-}
-
-.suggestion-list {
-  background-color: white;
+/* ===== Slash Command Menu Styling (SINGLE, CORRECT VERSION) ===== */
+.suggestion-items {
+  padding: 0.4rem;
+  position: relative;
   border-radius: 0.5rem;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0px 10px 20px rgba(0, 0, 0, 0.1);
-  padding: 0.25rem;
+  background: var(--bg);
+  color: var(--fg);
+  overflow: hidden;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  gap: 0.1rem; /* Adds a small space between items */
 }
 
 .suggestion-item {
+  display: block;
+  width: 100%;
+  text-align: left;
   background: transparent;
   border: none;
-  text-align: left;
-  padding: 0.5rem;
-  border-radius: 0.25rem;
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-sans);
   cursor: pointer;
-  font-family: sans-serif;
+  color: var(--fg); /* Ensure text color is correct */
 }
 
 .suggestion-item.is-selected {
-  background-color: #f3f4f6; /* A light gray for selection */
+  background-color: var(--link);
+  color: var(--bg); /* White text on blue background */
 }
