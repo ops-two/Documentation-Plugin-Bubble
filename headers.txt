@@ -40,15 +40,15 @@
 <script src="https://cdn.jsdelivr.net/npm/dompurify@latest/dist/purify.min.js"></script>
 <!-- Load your single JavaScript module for the editor -->
 <!-- Replace with your actual GitHub/CDN URL after uploading editor-core.js -->
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@c83ccbe/namespace.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@26179a5/namespace.js"></script>
 
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@c83ccbe/api-bridge.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@c83ccbe/bubble-bridge.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@c83ccbe/suggestion.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@26179a5/api-bridge.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@26179a5/bubble-bridge.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@26179a5/suggestion.js"></script>
 <!-- Load embed extension AFTER Tiptap global object is created -->
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@c83ccbe/embed-extension.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@26179a5/embed-extension.js"></script>
 <!-- Load image upload handler (existing file) -->
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@c83ccbe/image-upload-handler.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@26179a5/image-upload-handler.js"></script>
 <!-- Load editor core LAST to ensure all extensions are available -->
-<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@c83ccbe/editor-core.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ops-two/documentation-plugin-bubble@26179a5/editor-core.js"></script>
 
