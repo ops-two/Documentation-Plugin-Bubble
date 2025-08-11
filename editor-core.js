@@ -133,10 +133,10 @@ window.DocEditor.EditorCore = {
         return;
       }
       
-      // If not available, wait for it with a timeout
+      // If not available, wait for it with a shorter timeout
       console.log('⏳ Waiting for embed extension to be available...');
       let attempts = 0;
-      const maxAttempts = 60; // 6 seconds max wait
+      const maxAttempts = 20; // 2 seconds max wait (reduced from 6 seconds)
       
       const checkInterval = setInterval(() => {
         attempts++;
@@ -147,13 +147,13 @@ window.DocEditor.EditorCore = {
           resolve();
         } else if (attempts >= maxAttempts) {
           clearInterval(checkInterval);
-          console.warn('⚠️ Timeout waiting for embed extension, proceeding without it');
+          console.warn('⚠️ Timeout waiting for embed extension after 2s, proceeding without it');
           resolve();
         }
       }, 100);
     });
   },
-  
+
   async waitForImageUploadExtension() {
     return new Promise((resolve) => {
       // Check if image upload extension is already available
@@ -163,10 +163,10 @@ window.DocEditor.EditorCore = {
         return;
       }
       
-      // If not available, wait for it with a timeout
+      // If not available, wait for it with a shorter timeout
       console.log('⏳ Waiting for image upload extension to be available...');
       let attempts = 0;
-      const maxAttempts = 60; // 6 seconds max wait
+      const maxAttempts = 20; // 2 seconds max wait (reduced from 6 seconds)
       
       const checkInterval = setInterval(() => {
         attempts++;
@@ -177,7 +177,7 @@ window.DocEditor.EditorCore = {
           resolve();
         } else if (attempts >= maxAttempts) {
           clearInterval(checkInterval);
-          console.warn('⚠️ Timeout waiting for image upload extension, proceeding without it');
+          console.warn('⚠️ Timeout waiting for image upload extension after 2s, proceeding without it');
           resolve();
         }
       }, 100);
@@ -193,10 +193,10 @@ window.DocEditor.EditorCore = {
         return;
       }
       
-      // If not available, wait for it with a timeout
+      // If not available, wait for it with a much shorter timeout
       console.log('⏳ Waiting for bubble menu extension to be available...');
       let attempts = 0;
-      const maxAttempts = 60; // 6 seconds max wait
+      const maxAttempts = 20; // 2 seconds max wait (reduced from 6 seconds)
       
       const checkInterval = setInterval(() => {
         attempts++;
@@ -207,7 +207,7 @@ window.DocEditor.EditorCore = {
           resolve();
         } else if (attempts >= maxAttempts) {
           clearInterval(checkInterval);
-          console.warn('⚠️ Timeout waiting for bubble menu extension, proceeding without it');
+          console.warn('⚠️ Timeout waiting for bubble menu extension after 2s, proceeding without it');
           resolve();
         }
       }, 100);
@@ -238,35 +238,107 @@ window.DocEditor.EditorCore = {
 
   async save() {
     if (!this.editor) {
-      console.error("Save failed: Editor not initialized.");
-      return;
+      console.error("💾 Save failed: Editor not initialized.");
+      return { success: false, error: "Editor not initialized" };
     }
 
-    if (
-      !this.currentProperties ||
-      !this.currentProperties.save_api_endpoint_text
-    ) {
-      console.error(
-        "Save failed: Save API endpoint is not defined in properties."
-      );
-      return;
+    if (!this.currentProperties || !this.currentProperties.document_id_text) {
+      console.error("💾 Save failed: Document ID is not defined in properties.");
+      return { success: false, error: "Document ID not defined" };
     }
 
-    console.log("EditorCore: Initiating save...");
+    console.log("💾 EditorCore: Initiating PostgreSQL save...");
 
     try {
       const contentJson = this.editor.getJSON();
+      const docId = this.currentProperties.document_id_text;
+      const title = this.currentProperties.document_title_text || null;
+      const token = this.currentProperties.api_auth_token_text || null;
+
+      // Add metadata with save timestamp
+      const metadata = {
+        saved_at: new Date().toISOString(),
+        saved_from: 'bubble_plugin',
+        editor_version: '1.0.0'
+      };
 
       const result = await window.DocEditor.ApiBridge.saveDocument(
-        this.currentProperties.save_api_endpoint_text,
-        this.currentProperties.document_id_text,
+        docId,
         contentJson,
-        this.currentProperties.api_auth_token_text
+        title,
+        metadata,
+        token
       );
 
-      console.log("Save successful!", result);
+      console.log("✅ Save successful!", result);
+      
+      // Publish save success to Bubble.io
+      if (window.DocEditor.BubbleBridge && window.DocEditor.BubbleBridge.publishSaveStatus) {
+        window.DocEditor.BubbleBridge.publishSaveStatus(true, result);
+      }
+      
+      return { success: true, result: result };
     } catch (error) {
-      console.error("Save failed:", error);
+      console.error("❌ Save failed:", error);
+      
+      // Publish save failure to Bubble.io
+      if (window.DocEditor.BubbleBridge && window.DocEditor.BubbleBridge.publishSaveStatus) {
+        window.DocEditor.BubbleBridge.publishSaveStatus(false, { error: error.message });
+      }
+      
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
+   * Loads document content from PostgreSQL database
+   * @param {string} docId - Document ID to load
+   * @returns {Promise<object>} - Load result with success status
+   */
+  async load(docId = null) {
+    if (!this.editor) {
+      console.error("📄 Load failed: Editor not initialized.");
+      return { success: false, error: "Editor not initialized" };
+    }
+
+    const documentId = docId || (this.currentProperties && this.currentProperties.document_id_text);
+    
+    if (!documentId) {
+      console.error("📄 Load failed: Document ID not provided.");
+      return { success: false, error: "Document ID not provided" };
+    }
+
+    console.log("📄 EditorCore: Loading document from PostgreSQL...");
+
+    try {
+      const token = this.currentProperties && this.currentProperties.api_auth_token_text || null;
+      
+      const document = await window.DocEditor.ApiBridge.fetchDocument(
+        documentId,
+        token
+      );
+
+      // Set content in editor
+      if (document.content) {
+        this.editor.commands.setContent(document.content);
+        console.log("✅ Document loaded and content set in editor");
+      }
+
+      // Publish load success to Bubble.io
+      if (window.DocEditor.BubbleBridge && window.DocEditor.BubbleBridge.publishLoadStatus) {
+        window.DocEditor.BubbleBridge.publishLoadStatus(true, document);
+      }
+
+      return { success: true, document: document };
+    } catch (error) {
+      console.error("❌ Load failed:", error);
+      
+      // Publish load failure to Bubble.io
+      if (window.DocEditor.BubbleBridge && window.DocEditor.BubbleBridge.publishLoadStatus) {
+        window.DocEditor.BubbleBridge.publishLoadStatus(false, { error: error.message });
+      }
+      
+      return { success: false, error: error.message };
     }
   },
 };
