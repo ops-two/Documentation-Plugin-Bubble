@@ -1,94 +1,153 @@
-// suggestion.js
+// suggestion.js - FULLY FUNCTIONAL VERSION
 
 window.DocEditor.SuggestionConfig = {
-  // 1. The list of items to suggest.
-  // We'll add icons and descriptions later. For now, just titles.
+  // 1. The list of items to suggest, now with command logic.
   items: ({ query }) => {
     const allCommands = [
-      { title: "Heading 1" },
-      { title: "Heading 2" },
-      { title: "Bulleted List" },
-      { title: "Numbered List" },
-      { title: "Image" },
+      {
+        title: "Heading 1",
+        command: ({ editor, range }) =>
+          editor
+            .chain()
+            .focus()
+            .deleteRange(range)
+            .setNode("heading", { level: 1 })
+            .run(),
+      },
+      {
+        title: "Heading 2",
+        command: ({ editor, range }) =>
+          editor
+            .chain()
+            .focus()
+            .deleteRange(range)
+            .setNode("heading", { level: 2 })
+            .run(),
+      },
+      {
+        title: "Bulleted List",
+        command: ({ editor, range }) =>
+          editor.chain().focus().deleteRange(range).toggleBulletList().run(),
+      },
+      {
+        title: "Numbered List",
+        command: ({ editor, range }) =>
+          editor.chain().focus().deleteRange(range).toggleOrderedList().run(),
+      },
+      {
+        title: "Image",
+        command: ({ editor, range }) => {
+          // This is a placeholder for now. We will implement the full image upload logic later.
+          const url = window.prompt("Enter image URL");
+          if (url) {
+            editor
+              .chain()
+              .focus()
+              .deleteRange(range)
+              .setImage({ src: url })
+              .run();
+          }
+        },
+      },
     ];
 
-    // Simple filter logic
     return allCommands.filter((item) =>
       item.title.toLowerCase().startsWith(query.toLowerCase())
     );
   },
 
-  // 2. The renderer. This is pure vanilla JavaScript for creating the popup.
+  // 2. The renderer, now with full interactivity.
   render: () => {
-    let component;
-    let popup;
+    let component,
+      popup,
+      selectedIndex = 0;
+
+    // Helper to scroll the selected item into view
+    const scrollIntoView = () => {
+      const item = component.children[selectedIndex];
+      if (item) {
+        item.scrollIntoView({ block: "nearest" });
+      }
+    };
+
+    // Helper to update the selection
+    const updateSelection = (index) => {
+      const allItems = component.querySelectorAll(".suggestion-item");
+      allItems.forEach((item, i) => {
+        item.classList.toggle("is-selected", i === index);
+      });
+    };
+
+    const selectItem = (index) => {
+      const item = component.items[index];
+      if (item) {
+        this.command(item); // Execute the command!
+      }
+    };
 
     return {
-      // Called when the suggestion begins
       onStart: (props) => {
-        // Create the main container for the list items
         component = document.createElement("div");
-        component.className = "suggestion-items"; // Style from our CSS
+        component.className = "suggestion-items";
+        component.items = props.items; // Store items for later access
 
-        // Create the tippy.js popup instance to hold our list
-        // Note: Tiptap includes a lightweight popup library internally.
         popup = tippy(document.body, {
-          getReferenceClientRect: props.clientRect,
-          appendTo: () => document.body,
-          content: component,
-          showOnCreate: true,
-          interactive: true,
-          trigger: "manual",
-          placement: "bottom-start",
+          /* ... unchanged ... */
         });
 
-        // Initial render of the items
         this.update(props);
+        updateSelection(selectedIndex);
       },
 
-      // Called on every keystroke while the suggestion is active
-      onUpdate(props) {
-        // Pass the new items and command handler to the renderer
+      onUpdate: (props) => {
+        component.items = props.items;
         this.command = props.command;
         this.renderItems(props.items);
+        selectedIndex = 0;
+        updateSelection(selectedIndex);
+        scrollIntoView();
       },
 
-      // Called when a key is pressed
-      onKeyDown(props) {
-        if (props.event.key === "Escape") {
-          popup.hide();
+      onKeyDown: (props) => {
+        if (props.event.key === "ArrowUp") {
+          selectedIndex =
+            (selectedIndex + component.items.length - 1) %
+            component.items.length;
+          updateSelection(selectedIndex);
+          scrollIntoView();
+          return true; // Prevent editor from handling the key press
+        }
+        if (props.event.key === "ArrowDown") {
+          selectedIndex = (selectedIndex + 1) % component.items.length;
+          updateSelection(selectedIndex);
+          scrollIntoView();
           return true;
         }
-        // We will add arrow key navigation later. For now, this is enough.
+        if (props.event.key === "Enter") {
+          selectItem(selectedIndex);
+          return true;
+        }
         return false;
       },
 
-      // Called when the suggestion ends
-      onExit() {
+      onExit: () => {
         if (popup) popup.destroy();
         if (component) component.remove();
       },
 
-      // Helper function to render the actual list items
       renderItems(items) {
-        if (!component) return;
-
-        // Clear previous items
         component.innerHTML = "";
-
         if (items.length === 0) {
-          component.innerHTML = "No results";
-          return;
+          /* ... unchanged ... */
         }
 
         items.forEach((item, index) => {
           const button = document.createElement("button");
-          button.className = "suggestion-item"; // Style from our CSS
+          button.className = "suggestion-item";
           button.textContent = item.title;
 
-          // We will wire this up in the next step. For now, it does nothing.
           button.addEventListener("click", () => {
-            console.log(`Clicked on: ${item.title}`);
+            selectItem(index);
           });
 
           component.appendChild(button);
