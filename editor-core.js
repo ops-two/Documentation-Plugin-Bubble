@@ -1,52 +1,50 @@
-// editor-core.js
+// editor-core.js - Upgraded for Dynamic Content
 
-window.DocEditor = {
-  EditorCore: {
-    editor: null,
+window.DocEditor.EditorCore = {
+  editor: null,
 
-    /**
-     * Initializes the Tiptap editor instance.
-     * @param {HTMLElement} containerElement - The DOM element from initialize.js
-     */
-    initialize(containerElement) {
-      // Failsafe: Check if the global Tiptap object exists.
-      if (!window.Tiptap || !window.Tiptap.Editor) {
-        console.error(
-          "Tiptap or its Editor class is not available. Cannot initialize."
+  initialize(containerElement, properties) {
+    if (!window.Tiptap || !window.Tiptap.Editor) {
+      console.error("Tiptap not loaded.");
+      return;
+    }
+
+    const { Editor, StarterKit, Placeholder, Link, Image } = window.Tiptap;
+
+    this.editor = new Editor({
+      element: containerElement,
+      extensions: [
+        StarterKit,
+        Placeholder.configure({
+          placeholder: "Loading document...",
+        }),
+        Image, // We keep this here for the next step.
+      ],
+      // REMOVED: No more static content. It will be loaded from the API.
+      content: "",
+
+      // ADDED: This function runs every time the user types or makes a change.
+      onUpdate: ({ editor }) => {
+        // Get the latest content as a JSON object.
+        const contentJson = editor.getJSON();
+        // Send the stringified version to the Bubble Bridge to publish as a state.
+        window.DocEditor.BubbleBridge.publishContent(
+          JSON.stringify(contentJson)
         );
-        containerElement.innerHTML = "Error: Tiptap libraries failed to load.";
-        return;
-      }
+      },
+    });
 
-      // Destructure the classes from the global window.Tiptap object.
-      const { Editor, StarterKit, Placeholder, Link, Image } = window.Tiptap;
+    console.log("Tiptap editor instance created and waiting for content.");
+  },
 
-      // Create the Tiptap editor instance.
-      this.editor = new Editor({
-        element: containerElement,
-        extensions: [
-          StarterKit,
-          Placeholder.configure({
-            placeholder: "Start writing your beautiful document…",
-          }),
-          Link,
-          Image,
-        ],
-        // Static content for testing purposes.
-        content: `
-          <h2>Success! ✅</h2>
-          <p>The editor is now loading Tiptap and its extensions correctly using <strong>ES Modules</strong> from <code>esm.sh</code>.</p>
-          <p>The placeholder text should be visible if you clear this content.</p>
-        `,
-        editorProps: {
-          attributes: {
-            // Add some basic styling classes.
-            class: "prose focus:outline-none",
-          },
-        },
-      });
-
-      console.log("Tiptap editor instance created successfully.", this.editor);
-    },
+  /**
+   * Loads content into the Tiptap editor.
+   * @param {object} contentJson - The Tiptap-compatible JSON object.
+   */
+  setContent(contentJson) {
+    if (this.editor && contentJson) {
+      this.editor.commands.setContent(contentJson);
+      console.log("EditorCore: Content has been set.");
+    }
   },
 };
