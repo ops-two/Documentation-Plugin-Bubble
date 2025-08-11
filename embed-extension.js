@@ -172,7 +172,7 @@ function createEmbedExtension() {
         console.log('setEmbed command executing:', { url, detectedType });
         
         return commands.insertContent({
-          type: this.name,
+          type: 'embed',
           attrs: {
             src: url,
             type: detectedType,
