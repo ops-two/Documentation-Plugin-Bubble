@@ -1,7 +1,7 @@
-// suggestion.js - FINAL VERSION with Interaction Fix
+// suggestion.js - FINAL, FULLY FUNCTIONAL VERSION
 
 window.DocEditor.SuggestionConfig = {
-  // The `items` array is correct and does not need to be changed.
+  // 1. The list of command items.
   items: ({ query }) => {
     return [
       {
@@ -57,19 +57,21 @@ window.DocEditor.SuggestionConfig = {
     );
   },
 
+  // 2. The complete renderer with full interactivity.
   render: () => {
     let component;
     let popup;
     let selectedIndex = 0;
 
-    // This renderer object will hold all the state and methods.
+    // This object holds all the functions and state to ensure `this` context is correct.
     const renderer = {
-      // --- THIS IS THE FIX: Store command and items directly on the renderer object ---
-      command: null,
+      // These properties will be populated by onUpdate
       items: [],
+      command: () => {},
 
       onStart: (props) => {
         component = document.createElement("div");
+        // Use the class name from your correct CSS
         component.className = "suggestion-items";
 
         popup = tippy(document.body, {
@@ -86,11 +88,11 @@ window.DocEditor.SuggestionConfig = {
       },
 
       onUpdate: (props) => {
-        // --- THIS IS THE FIX: Update the renderer's properties ---
+        // Update the renderer's state with the latest items and command handler.
         renderer.items = props.items;
         renderer.command = props.command;
-
         selectedIndex = 0;
+
         renderer.renderItems();
         renderer.updateSelection();
       },
@@ -100,7 +102,7 @@ window.DocEditor.SuggestionConfig = {
           selectedIndex =
             (selectedIndex + renderer.items.length - 1) % renderer.items.length;
           renderer.updateSelection();
-          return true;
+          return true; // Prevent editor from handling the key press
         }
         if (props.event.key === "ArrowDown") {
           selectedIndex = (selectedIndex + 1) % renderer.items.length;
@@ -108,11 +110,11 @@ window.DocEditor.SuggestionConfig = {
           return true;
         }
         if (props.event.key === "Enter") {
-          props.event.preventDefault(); // Prevent new line from being added
+          props.event.preventDefault();
           renderer.selectItem(selectedIndex);
           return true;
         }
-        return false;
+        return false; // Let the editor handle other keys
       },
 
       onExit: () => {
@@ -120,7 +122,7 @@ window.DocEditor.SuggestionConfig = {
         if (component) component.remove();
       },
 
-      // --- HELPER FUNCTIONS that now use the renderer's properties ---
+      // --- HELPER FUNCTIONS ---
 
       updateSelection() {
         Array.from(component.children).forEach((child, index) => {
@@ -134,8 +136,8 @@ window.DocEditor.SuggestionConfig = {
 
       selectItem(index) {
         const item = renderer.items[index];
-        if (item && renderer.command) {
-          // --- THIS IS THE FIX: Call the stored command ---
+        if (item) {
+          // This now correctly calls the stored command function
           renderer.command(item);
         }
       },
