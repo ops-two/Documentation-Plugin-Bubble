@@ -26,23 +26,17 @@ window.DocEditor.EditorCore = {
       CodeBlockLowlight,
       lowlight,
     } = window.Tiptap;
+    const { YouTube } = window.DocEditor;
 
     try {
       this.editor = new Editor({
         element: containerElement,
         extensions: [
-          // IMPORTANT: Configure StarterKit to disable its basic codeBlock.
-          StarterKit.configure({
-            codeBlock: false,
-          }),
-
+          StarterKit.configure({ codeBlock: false }),
           Placeholder.configure({ placeholder: "Start writing..." }),
           Image,
-
-          // Now, add our advanced CodeBlock extension without conflicts.
-          CodeBlockLowlight.configure({
-            lowlight,
-          }),
+          CodeBlockLowlight.configure({ lowlight }),
+          YouTube.configure({ controls: true, modestBranding: true }),
         ],
 
         content: "", // Start empty, content will be loaded by update.js
