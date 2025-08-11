@@ -60,18 +60,18 @@ const EmbedHelpers = {
   }
 };
 
-// Check if Tiptap is available
-if (!window.Tiptap || !window.Tiptap.Node) {
-  console.error('❌ Tiptap.Node not available when creating embed extension');
-} else {
-  console.log('✅ Creating embed extension with Tiptap.Node');
-}
-
 /**
- * Universal Embed Extension for Tiptap
- * Following official Tiptap Node API structure
+ * Function to create the embed extension once Tiptap is available
  */
-window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
+function createEmbedExtension() {
+  if (!window.Tiptap || !window.Tiptap.Node) {
+    console.log('⏳ Waiting for Tiptap.Node to be available...');
+    return false;
+  }
+  
+  console.log('✅ Creating embed extension with Tiptap.Node');
+  
+  window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
   name: 'embed',
 
   group: 'block',
@@ -181,16 +181,48 @@ window.DocEditor.EmbedExtension = window.Tiptap.Node.create({
   },
 
 
-});
-
-// Verify the extension was created successfully
-if (window.DocEditor.EmbedExtension) {
-  console.log('✅ Embed extension created successfully');
-  console.log('Extension details:', {
-    name: window.DocEditor.EmbedExtension.name,
-    type: typeof window.DocEditor.EmbedExtension,
-    config: !!window.DocEditor.EmbedExtension.config
   });
-} else {
-  console.error('❌ Failed to create embed extension');
+  
+  // Verify the extension was created successfully
+  if (window.DocEditor.EmbedExtension) {
+    console.log('✅ Embed extension created successfully');
+    console.log('Extension details:', {
+      name: window.DocEditor.EmbedExtension.name,
+      type: typeof window.DocEditor.EmbedExtension,
+      config: !!window.DocEditor.EmbedExtension.config
+    });
+    return true;
+  } else {
+    console.error('❌ Failed to create embed extension');
+    return false;
+  }
 }
+
+/**
+ * Wait for Tiptap to be available and then create the extension
+ */
+function waitForTiptapAndCreateExtension() {
+  // Try to create the extension immediately
+  if (createEmbedExtension()) {
+    return; // Success!
+  }
+  
+  // If not available, poll every 100ms for up to 5 seconds
+  let attempts = 0;
+  const maxAttempts = 50; // 5 seconds
+  
+  const checkInterval = setInterval(() => {
+    attempts++;
+    
+    if (createEmbedExtension()) {
+      clearInterval(checkInterval);
+      console.log(`✅ Embed extension created after ${attempts * 100}ms`);
+    } else if (attempts >= maxAttempts) {
+      clearInterval(checkInterval);
+      console.error('❌ Timeout: Tiptap.Node not available after 5 seconds');
+    }
+  }, 100);
+}
+
+// Start the process
+waitForTiptapAndCreateExtension();
