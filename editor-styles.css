@@ -132,18 +132,17 @@
 /* ===== Slash Command Menu Styling (SINGLE, CORRECT VERSION) ===== */
 .suggestion-items {
   padding: 0.4rem;
+  position: relative;
   border-radius: 0.5rem;
   background: var(--bg);
   color: var(--fg);
   overflow: hidden;
   font-size: 0.9rem;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0px 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
-  max-height: 250px; /* Allow scrolling for long lists */
-  overflow-y: auto;
+  gap: 0.1rem; /* Adds a small space between items */
 }
 
 .suggestion-item {
@@ -156,10 +155,10 @@
   padding: 0.4rem 0.6rem;
   font-family: var(--font-sans);
   cursor: pointer;
-  color: var(--fg);
+  color: var(--fg); /* Ensure text color is correct */
 }
 
 .suggestion-item.is-selected {
-  background-color: var(--link); /* e.g., blue */
-  color: var(--bg); /* e.g., white */
+  background-color: var(--link);
+  color: var(--bg); /* White text on blue background */
 }
