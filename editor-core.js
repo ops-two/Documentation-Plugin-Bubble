@@ -1,4 +1,4 @@
-// editor-core.js - Upgraded for Dynamic Content
+// editor-core.js - CORRECTED AND STABILIZED
 
 window.DocEditor.EditorCore = {
   editor: null,
@@ -7,11 +7,14 @@ window.DocEditor.EditorCore = {
   updateProperties(properties) {
     this.currentProperties = properties;
   },
+
   initialize(containerElement, properties) {
     this.updateProperties(properties);
 
-    if (!window.Tiptap || !window.Tiptap.Editor) {
-      console.error("Tiptap not loaded.");
+    if (!window.Tiptap || !window.Tiptap.Editor || !window.Tiptap.lowlight) {
+      console.error("Tiptap or Lowlight library not available.");
+      containerElement.innerHTML =
+        "Error: Core editor libraries failed to load.";
       return;
     }
 
@@ -20,50 +23,49 @@ window.DocEditor.EditorCore = {
       StarterKit,
       Placeholder,
       Image,
-      Suggestion,
       CodeBlockLowlight,
-      YouTube,
       lowlight,
     } = window.Tiptap;
 
-    this.editor = new Editor({
-      element: containerElement,
-      extensions: [
-        StarterKit,
-        Placeholder.configure({ placeholder: "Type / for commands…" }),
-        Image,
-        // ADDED: The Suggestion extension
+    try {
+      this.editor = new Editor({
+        element: containerElement,
+        extensions: [
+          // IMPORTANT: Configure StarterKit to disable its basic codeBlock.
+          StarterKit.configure({
+            codeBlock: false,
+          }),
 
-        CodeBlockLowlight.configure({
-          lowlight,
-        }),
+          Placeholder.configure({ placeholder: "Start writing..." }),
+          Image,
 
-        // Configure the YouTube embed extension
-        YouTube.configure({
-          controls: true, // Show video controls
-          modestBranding: true, // Use a less prominent YouTube logo
-        }),
-        Suggestion.configure({
-          char: "/", // The trigger character
-          // The `suggestion` object here is our configuration from suggestion.js
-          suggestion: window.DocEditor.SuggestionConfig,
-        }),
-      ],
-      // REMOVED: No more static content. It will be loaded from the API.
-      content: "",
+          // Now, add our advanced CodeBlock extension without conflicts.
+          CodeBlockLowlight.configure({
+            lowlight,
+          }),
+        ],
 
-      // ADDED: This function runs every time the user types or makes a change.
-      onUpdate: ({ editor }) => {
-        // Get the latest content as a JSON object.
-        const contentJson = editor.getJSON();
-        // Send the stringified version to the Bubble Bridge to publish as a state.
-        window.DocEditor.BubbleBridge.publishContent(
-          JSON.stringify(contentJson)
-        );
-      },
-    });
+        content: "", // Start empty, content will be loaded by update.js
 
-    console.log("Tiptap editor instance created and waiting for content.");
+        onUpdate: ({ editor }) => {
+          const contentJson = editor.getJSON();
+          window.DocEditor.BubbleBridge.publishContent(
+            JSON.stringify(contentJson)
+          );
+        },
+      });
+
+      console.log(
+        "Tiptap editor instance initialized successfully with Code Block."
+      );
+    } catch (e) {
+      // This will catch any errors during initialization and display them.
+      console.error(
+        "A critical error occurred during Tiptap initialization:",
+        e
+      );
+      containerElement.innerHTML = `Error initializing editor: ${e.message}`;
+    }
   },
 
   /**
