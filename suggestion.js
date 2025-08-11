@@ -64,6 +64,109 @@ window.DocEditor.SuggestionConfig = {
         command: ({ editor }) => editor.chain().focus().toggleCodeBlock().run(),
       },
       {
+        title: "Upload Image",
+        command: ({ editor }) => {
+          try {
+            console.log('📸 Upload Image command triggered');
+            
+            // Create a file input element to trigger file selection
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.style.display = 'none';
+            
+            input.onchange = async (e) => {
+              try {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                  console.log(`📸 Starting image upload from slash command: ${file.name}`);
+                  
+                  // Get cursor position
+                  const { state } = editor;
+                  const { selection } = state;
+                  const pos = selection.from;
+                  
+                  // Insert loading placeholder
+                  const loadingNode = state.schema.nodes.paragraph.create({}, [
+                    state.schema.text('🔄 Uploading image...')
+                  ]);
+                  
+                  const tr = state.tr.insert(pos, loadingNode);
+                  editor.view.dispatch(tr);
+                  
+                  // Upload to backend
+                  const uploadEndpoint = 'http://localhost:3000/api/images/upload';
+                  
+                  if (window.ApiBridge && window.ApiBridge.uploadImage) {
+                    try {
+                      const result = await window.ApiBridge.uploadImage(file, uploadEndpoint);
+                      console.log(`✅ Image uploaded successfully: ${result.url}`);
+                      
+                      // Replace placeholder with actual image
+                      const currentState = editor.state;
+                      const imageNode = currentState.schema.nodes.image.create({
+                        src: result.url,
+                        alt: result.originalName || file.name,
+                        title: result.originalName || file.name
+                      });
+                      
+                      // Find and replace the loading placeholder
+                      const newTr = currentState.tr.replaceWith(pos, pos + loadingNode.nodeSize, imageNode);
+                      editor.view.dispatch(newTr);
+                      
+                      console.log('✅ Image placeholder replaced with uploaded image');
+                    } catch (error) {
+                      console.error('❌ Image upload failed:', error);
+                      
+                      // Replace placeholder with error message
+                      const currentState = editor.state;
+                      const errorNode = currentState.schema.nodes.paragraph.create({}, [
+                        currentState.schema.text(`❌ Upload failed: ${error.message}`)
+                      ]);
+                      
+                      const newTr = currentState.tr.replaceWith(pos, pos + loadingNode.nodeSize, errorNode);
+                      editor.view.dispatch(newTr);
+                    }
+                  } else {
+                    console.error('❌ ApiBridge not available for image upload');
+                    
+                    // Replace placeholder with error message
+                    const currentState = editor.state;
+                    const errorNode = currentState.schema.nodes.paragraph.create({}, [
+                      currentState.schema.text('❌ ApiBridge not available')
+                    ]);
+                    
+                    const newTr = currentState.tr.replaceWith(pos, pos + loadingNode.nodeSize, errorNode);
+                    editor.view.dispatch(newTr);
+                  }
+                } else {
+                  console.log('❌ No valid image file selected');
+                }
+                
+                // Clean up
+                if (document.body.contains(input)) {
+                  document.body.removeChild(input);
+                }
+              } catch (error) {
+                console.error('❌ Error in file selection handler:', error);
+                
+                // Clean up
+                if (document.body.contains(input)) {
+                  document.body.removeChild(input);
+                }
+              }
+            };
+            
+            // Trigger file selection
+            document.body.appendChild(input);
+            input.click();
+            
+          } catch (error) {
+            console.error('❌ Error in Upload Image command:', error);
+          }
+        },
+      },
+      {
         title: "YouTube Embed",
         command: ({ editor }) => {
           const url = prompt('Enter YouTube URL:');

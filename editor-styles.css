@@ -184,28 +184,28 @@
 }
 
 .embed-wrapper iframe {
-  width: 100% !important;
-  height: 400px !important; /* Default height */
-  border: none;
-  border-radius: var(--radius);
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  position: relative;
-  z-index: 1;
+  width: 100%;
+  height: 400px;
+  border: none;
+  border-radius: 8px;
 }
 
-/* Twitter embeds need different height */
+/* YouTube embed specific styling */
+.embed-wrapper[data-type="youtube"] iframe {
+  height: 315px;
+}
+
+/* Twitter embed specific styling */
 .embed-wrapper[data-type="twitter"] iframe {
   height: 500px;
 }
 
-/* YouTube and Vimeo embeds - responsive 16:9 */
-.embed-wrapper[data-type="youtube"] iframe,
-.embed-wrapper[data-type="vimeo"] iframe {
-  height: calc(100vw * 0.5625); /* 16:9 aspect ratio */
-  max-height: 400px;
-  min-height: 300px;
+/* Generic embed styling */
+.embed-wrapper[data-type="generic"] iframe {
+  height: 400px;
 }
 
 /* Loading state for embeds */
@@ -229,4 +229,95 @@
 .ProseMirror .embed-wrapper.ProseMirror-selectednode {
   outline: 2px solid var(--link);
   outline-offset: 2px;
+}
+
+/* Floating Bubble Menu Styling */
+.bubble-menu {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  z-index: 1000;
+  animation: bubbleMenuFadeIn 0.2s ease-out;
+}
+
+.bubble-menu-content {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.bubble-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.bubble-menu-btn:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.bubble-menu-btn.is-active {
+  background: #3b82f6;
+  color: white;
+}
+
+.bubble-menu-btn svg {
+  stroke-width: 2;
+}
+
+.bubble-menu-separator {
+  width: 1px;
+  height: 20px;
+  background: #e1e5e9;
+  margin: 0 4px;
+}
+
+@keyframes bubbleMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark theme support for bubble menu */
+.tiptap-dark-theme .bubble-menu {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tiptap-dark-theme .bubble-menu-btn {
+  color: #94a3b8;
+}
+
+.tiptap-dark-theme .bubble-menu-btn:hover {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+.tiptap-dark-theme .bubble-menu-btn.is-active {
+  background: #3b82f6;
+  color: white;
+}
+
+.tiptap-dark-theme .bubble-menu-separator {
+  background: #475569;
 }
