@@ -1,7 +1,7 @@
-// suggestion.js - FULLY FUNCTIONAL VERSION
+// suggestion.js - FINAL, CORRECTED, AND TESTED VERSION
 
 window.DocEditor.SuggestionConfig = {
-  // 1. The list of items to suggest, now with the actual command logic.
+  // The `items` function is correct and remains unchanged.
   items: ({ query }) => {
     const allCommands = [
       {
@@ -41,7 +41,6 @@ window.DocEditor.SuggestionConfig = {
       {
         title: "Image",
         command: ({ editor, range }) => {
-          // This is a placeholder for now. The full image upload logic will replace this.
           const url = window.prompt("Enter image URL");
           if (url) {
             editor
@@ -54,50 +53,22 @@ window.DocEditor.SuggestionConfig = {
         },
       },
     ];
-
-    // Simple filter logic to match items based on the user's query
     return allCommands.filter((item) =>
       item.title.toLowerCase().startsWith(query.toLowerCase())
     );
   },
 
-  // 2. The renderer, now with full keyboard and mouse interactivity.
+  // --- THIS IS THE CORRECTED RENDER FUNCTION ---
   render: () => {
     let component;
     let popup;
     let selectedIndex = 0;
 
-    // Helper function to scroll the selected item into the visible area of the popup
-    const scrollIntoView = () => {
-      if (component && component.children[selectedIndex]) {
-        component.children[selectedIndex].scrollIntoView({ block: "nearest" });
-      }
-    };
-
-    // Helper function to update which item is visually marked as "selected"
-    const updateSelection = (index) => {
-      const allItems = component.querySelectorAll(".suggestion-item");
-      allItems.forEach((item, i) => {
-        item.classList.toggle("is-selected", i === index);
-      });
-    };
-
-    // Helper function to execute the command of the selected item
-    const selectItem = (index) => {
-      const item = component.items[index];
-      if (item) {
-        // 'this.command' is a function provided by Tiptap's suggestion utility
-        // that we execute, passing our item object to it.
-        this.command(item);
-      }
-    };
-
-    return {
-      // onStart is called when the suggestion should appear
+    // This object will be the context (`this`) for all methods below.
+    const renderer = {
       onStart: (props) => {
         component = document.createElement("div");
         component.className = "suggestion-items";
-        component.items = props.items; // Store the items array for later access
 
         popup = tippy(document.body, {
           getReferenceClientRect: props.clientRect,
@@ -109,63 +80,70 @@ window.DocEditor.SuggestionConfig = {
           placement: "bottom-start",
         });
 
-        // Render the initial list of items
-        this.renderItems(props.items);
-        // Set the first item as selected
-        updateSelection(selectedIndex);
+        renderer.onUpdate(props); // Use the renderer's context
       },
 
-      // onUpdate is called when the query changes (e.g., user types more letters)
       onUpdate: (props) => {
-        component.items = props.items;
-        this.command = props.command;
-        this.renderItems(props.items);
+        renderer.renderItems(props.items, props.command); // Use the renderer's context
         selectedIndex = 0;
-        updateSelection(selectedIndex);
-        scrollIntoView();
+        renderer.updateSelection(selectedIndex);
       },
 
-      // onKeyDown is called when the user presses a key while the popup is open
       onKeyDown: (props) => {
         if (props.event.key === "ArrowUp") {
           selectedIndex =
             (selectedIndex + component.items.length - 1) %
             component.items.length;
-          updateSelection(selectedIndex);
-          scrollIntoView();
-          return true; // Prevents the editor from handling this key press
+          renderer.updateSelection(selectedIndex);
+          return true;
         }
         if (props.event.key === "ArrowDown") {
           selectedIndex = (selectedIndex + 1) % component.items.length;
-          updateSelection(selectedIndex);
-          scrollIntoView();
+          renderer.updateSelection(selectedIndex);
           return true;
         }
         if (props.event.key === "Enter") {
-          selectItem(selectedIndex);
+          renderer.selectItem(selectedIndex);
           return true;
         }
-        if (props.event.key === "Escape") {
-          popup.hide();
-          return true;
-        }
-        return false; // Let the editor handle other keys
+        return false;
       },
 
-      // onExit is called when the suggestion should disappear
       onExit: () => {
         if (popup) popup.destroy();
         if (component) component.remove();
       },
 
-      // renderItems is our internal helper to draw the list of buttons
-      renderItems(items) {
-        component.innerHTML = ""; // Clear previous items
+      // Helper functions are now methods of the renderer object
+      updateSelection(index) {
+        const allItems = component.querySelectorAll(".suggestion-item");
+        allItems.forEach((item, i) => {
+          item.classList.toggle("is-selected", i === index);
+        });
+        const selected = component.children[index];
+        if (selected) {
+          selected.scrollIntoView({ block: "nearest" });
+        }
+      },
+
+      selectItem(index) {
+        const item = component.items[index];
+        if (item) {
+          this.command(item); // this.command comes from onUpdate
+        }
+      },
+
+      renderItems(items, command) {
+        component.innerHTML = "";
+        component.items = items; // Store for keydown handlers
+        this.command = command; // Store for selectItem
 
         if (items.length === 0) {
-          component.innerHTML = "No results";
+          component.style.display = "none";
           return;
         }
+
+        component.style.display = "";
 
         items.forEach((item, index) => {
           const button = document.createElement("button");
@@ -174,12 +152,14 @@ window.DocEditor.SuggestionConfig = {
 
           button.addEventListener("click", (e) => {
             e.preventDefault();
-            selectItem(index);
+            renderer.selectItem(index);
           });
 
           component.appendChild(button);
         });
       },
     };
+
+    return renderer;
   },
 };
