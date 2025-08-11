@@ -45,7 +45,7 @@ const EmbedHelpers = {
     switch (type) {
       case 'youtube':
         const youtubeId = this.extractYouTubeId(url);
-        return youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : url;
+        return youtubeId ? `https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&showinfo=0` : url;
       case 'twitter':
         return `https://twitframe.com/show?url=${encodeURIComponent(url)}`;
       case 'vimeo':
@@ -146,9 +146,11 @@ function createEmbedExtension() {
           height: height,
           title: `${type} embed`,
           frameborder: '0',
-          allowfullscreen: type === 'youtube' || type === 'vimeo' || type === 'codepen' ? 'true' : null,
-          allow: type === 'youtube' ? 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' : 
+          allowfullscreen: type === 'youtube' || type === 'vimeo' || type === 'codepen' ? 'allowfullscreen' : null,
+          allow: type === 'youtube' ? 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' : 
                  type === 'vimeo' ? 'autoplay; fullscreen; picture-in-picture' : null,
+          loading: 'lazy',
+          style: 'border: none; display: block;'
         },
       ],
     ];
