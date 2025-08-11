@@ -1,0 +1,149 @@
+/* editor-styles.css - Tiptap Version, inspired by BlockNotes style */
+
+/* ============================================================================
+   Tiptap Editor — Professional Styling
+============================================================================ */
+
+/* ---------- Core Variables & Font ---------- */
+:root {
+  --font-sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+    Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --leading: 1.65;
+  --measure: 70ch; /* Max width for readability */
+  --block-gap: 1.1rem;
+  --gap-tight: 0.7rem;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 6px 20px rgba(0, 0, 0, 0.06);
+
+  /* Light Theme (default) */
+  --bg: #fff;
+  --fg: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --link: #2563eb;
+}
+
+/* Dark Theme (applied via a class on the host) */
+.tiptap-dark-theme {
+  --bg: #0b0f19;
+  --fg: #e5e7eb;
+  --muted: #9aa4b2;
+  --border: #2a3242;
+  --link: #60a5fa;
+  color-scheme: dark;
+}
+
+/* ---------- Tiptap Editor Base ---------- */
+/* The .ProseMirror class is Tiptap's main editor container */
+.ProseMirror {
+  font-family: var(--font-sans);
+  color: var(--fg);
+  line-height: var(--leading);
+  padding: 1rem 2rem; /* Give it some breathing room */
+  outline: none; /* Tiptap handles its own focus state */
+  height: 100%;
+  overflow-y: auto; /* Allow scrolling within the editor */
+}
+
+/* Set max-width for all content blocks inside the editor */
+.ProseMirror > * {
+  max-width: var(--measure);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Vertical Spacing (Rhythm) */
+.ProseMirror > * + * {
+  margin-top: var(--block-gap);
+}
+
+.ProseMirror p + p {
+  margin-top: var(--gap-tight);
+}
+
+/* Headings */
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3 {
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  font-weight: 700;
+}
+.ProseMirror h1 {
+  font-size: 2.125rem;
+}
+.ProseMirror h2 {
+  font-size: 1.75rem;
+}
+.ProseMirror h3 {
+  font-size: 1.375rem;
+}
+
+/* Blockquotes */
+.ProseMirror blockquote {
+  margin-left: 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--border);
+  color: var(--muted);
+}
+
+/* Lists */
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5rem;
+}
+.ProseMirror li p {
+  margin-top: 0.2rem; /* Tiptap wraps list items in paragraphs, so we adjust their margin */
+  margin-bottom: 0.2rem;
+}
+
+/* Images */
+.ProseMirror img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: var(--block-gap) auto;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid var(--link);
+}
+
+/* Placeholder Text */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted);
+  pointer-events: none;
+  height: 0;
+}
+
+/* ===== Slash Command Menu Styling (NEW) ===== */
+.suggestion-items {
+  padding: 0.3rem;
+  position: relative;
+  border-radius: 0.5rem;
+  background: var(--bg);
+  color: var(--fg);
+  overflow: hidden;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.suggestion-item {
+  display: block;
+  margin: 0;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-sans);
+}
+
+.suggestion-item.is-selected {
+  background-color: var(--link);
+  color: var(--bg);
+}
