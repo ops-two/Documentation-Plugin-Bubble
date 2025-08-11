@@ -17,22 +17,16 @@ window.DocEditor.EditorCore = {
     }
 
     // We still need all the modules from the global object
-    const { Editor, StarterKit, Placeholder, Image, Suggestion } =
+    const { Editor, Extension, StarterKit, Placeholder, Image, Suggestion } =
       window.Tiptap;
 
-    // --- THIS IS THE FIX ---
-    // We create a custom extension that USES the suggestion utility.
-    // Tiptap's `Extension.create` is the standard way to do this.
-    const SlashCommandExtension = window.Tiptap.Core.Extension.create({
-      name: "slashCommand", // Give our custom extension a name
-
-      // The key part: addProseMirrorPlugins
+    const SlashCommandExtension = Extension.create({
+      name: "slashCommand",
       addProseMirrorPlugins() {
         return [
           Suggestion({
-            editor: this.editor, // Pass the Tiptap editor instance
-            char: "/", // The trigger character
-            // The `suggestion` object comes from our suggestion.js file
+            editor: this.editor,
+            char: "/",
             suggestion: window.DocEditor.SuggestionConfig,
           }),
         ];
@@ -45,8 +39,6 @@ window.DocEditor.EditorCore = {
         StarterKit,
         Placeholder.configure({ placeholder: "Type `/` for commands…" }),
         Image,
-
-        // Now, we add our new custom extension to the list.
         SlashCommandExtension,
       ],
       // onUpdate is unchanged
