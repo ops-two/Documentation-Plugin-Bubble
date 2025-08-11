@@ -15,16 +15,38 @@ window.DocEditor.EditorCore = {
       return;
     }
 
-    const { Editor, StarterKit, Placeholder, Link, Image } = window.Tiptap;
+    const {
+      Editor,
+      StarterKit,
+      Placeholder,
+      Image,
+      Suggestion,
+      CodeBlockLowlight,
+      YouTube,
+      lowlight,
+    } = window.Tiptap;
 
     this.editor = new Editor({
       element: containerElement,
       extensions: [
         StarterKit,
-        Placeholder.configure({
-          placeholder: "Loading document...",
+        Placeholder.configure({ placeholder: "Type / for commands…" }),
+        Image,
+        // ADDED: The Suggestion extension
+        Suggestion.configure({
+          char: "/", // The trigger character
+          // The `suggestion` object here is our configuration from suggestion.js
+          suggestion: window.DocEditor.SuggestionConfig,
         }),
-        Image, // We keep this here for the next step.
+        CodeBlockLowlight.configure({
+          lowlight,
+        }),
+
+        // Configure the YouTube embed extension
+        YouTube.configure({
+          controls: true, // Show video controls
+          modestBranding: true, // Use a less prominent YouTube logo
+        }),
       ],
       // REMOVED: No more static content. It will be loaded from the API.
       content: "",
