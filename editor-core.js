@@ -1,35 +1,63 @@
+// editor-core.js - Corrected for the esm.sh module loader
+
 window.DocEditor = {
   EditorCore: {
     editor: null,
 
+    /**
+     * Initializes the Tiptap editor instance.
+     * @param {HTMLElement} containerElement - The DOM element from initialize.js
+     */
     initialize(containerElement) {
-      // The failsafe check remains the same.
-      if (!window.Tiptap || !window.Tiptap.Core) {
-        console.error("Tiptap is not loaded. Cannot initialize editor.");
+      // Failsafe: Check if the global Tiptap object and its Editor exist.
+      if (!window.Tiptap || !window.Tiptap.Editor) {
+        console.error(
+          "Tiptap or its Editor class is not loaded. Cannot initialize."
+        );
+        containerElement.innerHTML = "Error: Tiptap libraries failed to load.";
         return;
       }
 
-      // CORRECTED: Access classes from the UMD build structure.
-      const Editor = window.Tiptap.Core.Editor;
-      // The starter kit is a default export, so we access it via `.default`.
-      const StarterKit = window.Tiptap.StarterKit.default;
+      // CORRECTED: Destructure the classes directly from the flat window.Tiptap object.
+      // This matches the structure you created in your HTML Header.
+      const { Editor, StarterKit, Placeholder, Link, Image } = window.Tiptap;
 
+      // Create the Tiptap editor instance with the new extensions.
       this.editor = new Editor({
         element: containerElement,
-        extensions: [StarterKit],
+        extensions: [
+          // The StarterKit provides headings, bold, italic, etc.
+          StarterKit,
+
+          // The Placeholder extension.
+          Placeholder.configure({
+            placeholder: "Start typing your document here...",
+          }),
+
+          // The Link extension.
+          Link,
+
+          // The Image extension.
+          Image,
+        ],
+        // You can leave the content empty to see the placeholder text.
         content: `
-          <h2>It Works! ✅</h2>
-          <p>This is the <strong>Tiptap editor</strong> running correctly inside your Bubble.io plugin.</p>
-          <p>The <code>appendChild</code> error is fixed, and Tiptap is now loading reliably using the UMD scripts.</p>
+          <h2>Success! ✅</h2>
+          <p>The editor is now loading Tiptap and its extensions correctly using <strong>ES Modules</strong> from <code>esm.sh</code>.</p>
+          <p>The placeholder text should be visible if you clear this content.</p>
         `,
         editorProps: {
           attributes: {
-            class: "prose", // Using a simpler class for now.
+            // Add some basic styling classes for modern CSS frameworks (like Tailwind)
+            class: "prose focus:outline-none",
           },
         },
       });
 
-      console.log("Tiptap editor instance created successfully.", this.editor);
+      console.log(
+        "Tiptap editor instance created successfully with ES Modules.",
+        this.editor
+      );
     },
   },
 };
