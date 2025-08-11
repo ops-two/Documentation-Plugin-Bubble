@@ -1,0 +1,16 @@
+function(instance, context) {
+  // Create a root div that will hold our theme class (e.g., tiptap-dark-theme).
+  const rootDiv = $('<div></div>');
+  rootDiv.css({ 'width': '100%', 'height': '100%', 'background-color': 'var(--bg)' });
+  instance.canvas.append(rootDiv);
+
+  // The container for Tiptap is now created inside the root div.
+  // We still pass the raw DOM element to Tiptap.
+  const editorContainer = $('<div></div>')[0];
+  rootDiv.append(editorContainer);
+
+  // Store references for the update function.
+  instance.data.rootDiv = rootDiv;
+  instance.data.editorContainer = editorContainer;
+  instance.data.isEditorInitialized = false;
+}

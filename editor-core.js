@@ -1,4 +1,9 @@
 // editor-core.js - FINAL VERSION with Spread Syntax Fix
+console.log('editor-core.js v1.1 loaded');
+
+// Version beacon for debugging
+window.DocEditor = window.DocEditor || {};
+window.DocEditor._editorCoreVersion = '1.1';
 
 window.DocEditor.EditorCore = {
   editor: null,

@@ -1,4 +1,9 @@
 // suggestion.js - FINAL, FULLY FUNCTIONAL VERSION
+console.log('suggestion.js v1.1 loaded');
+
+// Version beacon for debugging
+window.DocEditor = window.DocEditor || {};
+window.DocEditor._suggestionVersion = '1.1';
 
 window.DocEditor.SuggestionConfig = {
   // 1. The list of command items.
@@ -81,6 +86,12 @@ window.DocEditor.SuggestionConfig = {
         component = document.createElement("div");
         // Use the class name from your correct CSS
         component.className = "suggestion-items";
+        
+        // Critical: Set tabindex to make it focusable
+        component.setAttribute('tabindex', '-1');
+        
+        // Store the editor reference for focus management
+        renderer.editor = props.editor;
 
         popup = tippy(document.body, {
           getReferenceClientRect: props.clientRect,
@@ -90,6 +101,21 @@ window.DocEditor.SuggestionConfig = {
           interactive: true,
           trigger: "manual",
           placement: "bottom-start",
+          // Critical fixes for interactivity
+          hideOnClick: false,
+          allowHTML: true,
+          arrow: false,
+          offset: [0, 8],
+          // Ensure proper z-index
+          zIndex: 9999,
+          // Prevent auto-hiding when clicking inside
+          onShow(instance) {
+            // Prevent the popup from hiding when clicking inside
+            instance.popper.addEventListener('mousedown', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            });
+          }
         });
 
         renderer.onUpdate(props);
@@ -144,9 +170,30 @@ window.DocEditor.SuggestionConfig = {
 
       selectItem(index) {
         const item = renderer.items[index];
-        if (item) {
-          // This now correctly calls the stored command function
-          renderer.command(item);
+        if (item && renderer.command) {
+          console.log(`Executing command: ${item.title}`);
+          
+          // Hide popup first
+          if (popup) {
+            popup.hide();
+          }
+          
+          // Execute the command with proper context
+          try {
+            renderer.command(item);
+            console.log(`Command executed successfully: ${item.title}`);
+          } catch (error) {
+            console.error(`Error executing command ${item.title}:`, error);
+          }
+          
+          // Return focus to editor
+          if (renderer.editor) {
+            setTimeout(() => {
+              renderer.editor.commands.focus();
+            }, 10);
+          }
+        } else {
+          console.error('No item or command function available', { item, command: renderer.command });
         }
       },
 
@@ -164,14 +211,33 @@ window.DocEditor.SuggestionConfig = {
           const button = document.createElement("button");
           button.className = "suggestion-item";
           button.textContent = item.title;
-
+          button.type = "button"; // Explicit button type
+          button.setAttribute('data-index', index);
+          
+          // Multiple event handlers for better compatibility
           button.addEventListener("click", (e) => {
             e.preventDefault();
+            e.stopPropagation();
+            console.log(`Suggestion clicked: ${item.title}`);
             renderer.selectItem(index);
+          });
+          
+          button.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+          
+          // Add hover effect
+          button.addEventListener("mouseenter", () => {
+            selectedIndex = index;
+            renderer.updateSelection();
           });
 
           component.appendChild(button);
         });
+        
+        // Ensure initial selection is visible
+        renderer.updateSelection();
       },
     };
 

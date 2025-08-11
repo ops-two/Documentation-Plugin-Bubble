@@ -1,0 +1,57 @@
+function(instance, properties, context) {
+    // 1. First, handle any dynamic updates that can happen on every run.
+    if (instance.data.rootDiv) {
+        // This assumes you have a 'dark_mode_boolean' property in your plugin fields.
+        const isDark = !!properties.dark_mode_boolean;
+        instance.data.rootDiv.toggleClass('tiptap-dark-theme', isDark);
+    }
+    
+    
+    
+    // Always update the properties in our core module on every run.
+    if (window.DocEditor && window.DocEditor.EditorCore) {
+        window.DocEditor.EditorCore.updateProperties(properties);
+    }
+
+    // 2. Gatekeeper for one-time initialization. If already initialized, we can skip this block.
+    if (!instance.data.isEditorInitialized) {
+        // Wait until all our scripts are loaded. We check for the last one in the chain.
+        if (!window.Tiptap || !window.DocEditor || !window.DocEditor.SuggestionConfig) {
+            return; // Not ready, wait for the next run.
+        }
+
+        // Initialize all modules
+        window.DocEditor.BubbleBridge.init(instance);
+        window.DocEditor.EditorCore.initialize(instance.data.editorContainer, properties);
+        
+        instance.data.isEditorInitialized = true;
+        console.log("All modules initialized.");
+    }
+
+    // 3. Handle loading a new document only if the ID has changed.
+    if (properties.document_id_text && properties.document_id_text !== instance.data.loaded_doc_id) {
+        
+        // Store the new ID to prevent re-loading on every update cycle.
+        instance.data.loaded_doc_id = properties.document_id_text;
+        console.log(`New document ID detected: ${properties.document_id_text}`);
+
+        // Call our ApiBridge to fetch the data.
+        window.DocEditor.ApiBridge.fetchDocument(
+            properties.load_api_endpoint_text,
+            properties.document_id_text,
+            properties.api_auth_token_text
+        )
+        .then(data => {
+            // On success, pass the content to the EditorCore.
+            window.DocEditor.EditorCore.setContent(data.content_json);
+        })
+        .catch(error => {
+            console.error("Failed to load document:", error);
+            // Optional: You could display an error in the editor.
+            window.DocEditor.EditorCore.setContent({
+                type: 'doc',
+                content: [{ type: 'paragraph', content: [{ type: 'text', text: `Error: ${error.message}` }] }],
+            });
+        });
+    }
+}
