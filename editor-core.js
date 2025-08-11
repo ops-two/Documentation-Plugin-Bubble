@@ -33,12 +33,16 @@ window.DocEditor.EditorCore = {
 
     const SlashCommandExtension = Extension.create({
       name: "slashCommand",
+
       addProseMirrorPlugins() {
         return [
           Suggestion({
             editor: this.editor,
+            key: suggestionPluginKey,
             char: "/",
 
+            // The spread syntax (...) unnests our config object, passing `items` and `render`
+            // directly to the Suggestion utility, which is what it expects.
             ...window.DocEditor.SuggestionConfig,
           }),
         ];
